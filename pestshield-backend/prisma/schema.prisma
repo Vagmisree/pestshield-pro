@@ -1,0 +1,507 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─── ENUMS ──────────────────────────────────────────────────────────────────────
+
+enum UserRole {
+  CUSTOMER
+  TECHNICIAN
+  ADMIN
+}
+
+enum BookingStatus {
+  PENDING
+  CONFIRMED
+  TECHNICIAN_ASSIGNED
+  INSPECTION_DONE
+  APPROVED
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+  RESCHEDULED
+}
+
+enum PestType {
+  COCKROACH
+  TERMITE
+  RODENT
+  MOSQUITO
+  BED_BUG
+  GENERAL
+}
+
+enum PropertyType {
+  BHK_1
+  BHK_2
+  BHK_3
+  VILLA
+  APARTMENT
+  OFFICE
+  RESTAURANT
+  HOTEL
+  INDUSTRIAL
+}
+
+enum PlanType {
+  SINGLE
+  CONTRACT_RESIDENTIAL
+  AMC_COMMERCIAL
+}
+
+enum TimeSlot {
+  MORNING
+  AFTERNOON
+  EVENING
+}
+
+enum PaymentStatus {
+  PENDING
+  SUCCESS
+  FAILED
+  REFUNDED
+}
+
+enum PaymentMethod {
+  RAZORPAY
+  PHONEPE
+  GOOGLEPAY
+  CARD
+  UPI
+  NET_BANKING
+}
+
+enum NotificationChannel {
+  WHATSAPP
+  SMS
+  EMAIL
+  PUSH
+}
+
+enum NotificationStatus {
+  QUEUED
+  SENT
+  DELIVERED
+  FAILED
+}
+
+enum TechnicianStatus {
+  AVAILABLE
+  ON_JOB
+  OFF_DUTY
+  ON_LEAVE
+}
+
+enum InfestationSeverity {
+  LEVEL_1
+  LEVEL_2
+  LEVEL_3
+  LEVEL_4
+  LEVEL_5
+}
+
+enum OrderStatus {
+  PLACED
+  CONFIRMED
+  SHIPPED
+  DELIVERED
+  CANCELLED
+  RETURNED
+}
+
+enum ReportStatus {
+  PENDING_APPROVAL
+  APPROVED
+  REJECTED
+}
+
+enum OtpPurpose {
+  BOOKING_CLOSURE
+  LOGIN
+  VERIFY
+}
+
+enum DiscountType {
+  PERCENT
+  FLAT
+}
+
+enum ReviewStatus {
+  PENDING
+  PUBLISHED
+  REJECTED
+}
+
+// ─── MODELS ─────────────────────────────────────────────────────────────────────
+
+model User {
+  id           String   @id @default(uuid())
+  email        String?  @unique
+  phone        String   @unique
+  passwordHash String
+  role         UserRole
+  isVerified   Boolean  @default(false)
+  isActive     Boolean  @default(true)
+  refreshToken String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  customer   Customer?
+  technician Technician?
+  admin      Admin?
+
+  @@index([phone])
+  @@index([email])
+  @@index([role])
+}
+
+model Customer {
+  id        String   @id @default(uuid())
+  userId    String   @unique
+  name      String
+  addresses Json     @default("[]") // Array of address objects
+  pincodes  String[] @default([])
+  planType  PlanType @default(SINGLE)
+  gstin     String?  // For business customers
+  createdAt DateTime @default(now())
+
+  user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  bookings Booking[]
+  payments Payment[]
+  reviews  Review[]
+  orders   Order[]
+
+  @@index([userId])
+}
+
+model Technician {
+  id                 String          @id @default(uuid())
+  userId             String          @unique
+  name               String
+  phone              String
+  skillTags          PestType[]      @default([])
+  currentLat         Float?
+  currentLng         Float?
+  status             TechnicianStatus @default(AVAILABLE)
+  certifications     Json            @default("[]")
+  avgRating          Float           @default(0)
+  totalJobsCompleted Int             @default(0)
+  isActive           Boolean         @default(true)
+  createdAt          DateTime        @default(now())
+
+  user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  bookings Booking[]
+  slots    Slot[]
+
+  @@index([userId])
+  @@index([status])
+  @@index([currentLat, currentLng])
+}
+
+model Admin {
+  id          String @id @default(uuid())
+  userId      String @unique
+  name        String
+  permissions Json   @default("[]")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model ServiceCatalogue {
+  id          String   @id @default(uuid())
+  name        String
+  slug        String   @unique
+  pestType    PestType
+  basePrice   Float
+  pricePerSqFt Float   @default(0)
+  duration    String   // e.g. "45-60 min"
+  method      String
+  warranty    String   // e.g. "30 days"
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+
+  bookings Booking[]
+
+  @@index([slug])
+  @@index([pestType])
+}
+
+model Booking {
+  id             String        @id @default(uuid())
+  bookingRef     String        @unique // Human-readable e.g. PSP-2026-001234
+  customerId     String
+  technicianId   String?
+  serviceId      String
+  planType       PlanType
+  propertyType   PropertyType
+  propertySize   String?       // e.g. "1200 sqft"
+  address        String
+  pincode        String
+  city           String
+  slotDate       DateTime
+  slotTime       TimeSlot
+  status         BookingStatus @default(PENDING)
+  notes          String?
+  couponId       String?
+  baseAmount     Float
+  discountAmount Float         @default(0)
+  gstAmount      Float
+  totalAmount    Float
+  paymentStatus  PaymentStatus @default(PENDING)
+  assignedAt     DateTime?
+  completedAt    DateTime?
+  cancelledAt    DateTime?
+  cancelReason   String?
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+
+  customer      Customer          @relation(fields: [customerId], references: [id])
+  technician    Technician?       @relation(fields: [technicianId], references: [id])
+  service       ServiceCatalogue  @relation(fields: [serviceId], references: [id])
+  coupon        Coupon?           @relation(fields: [couponId], references: [id])
+  report        InspectionReport?
+  payments      Payment[]
+  notifications Notification[]
+  review        Review?
+  otps          OTP[]
+
+  @@index([customerId])
+  @@index([technicianId])
+  @@index([status])
+  @@index([slotDate])
+  @@index([bookingRef])
+  @@index([pincode])
+}
+
+model Slot {
+  id           String   @id @default(uuid())
+  technicianId String
+  date         DateTime
+  timeSlot     TimeSlot
+  isAvailable  Boolean  @default(true)
+  bookingId    String?
+
+  technician Technician @relation(fields: [technicianId], references: [id])
+
+  @@unique([technicianId, date, timeSlot])
+  @@index([date, timeSlot, isAvailable])
+}
+
+model InspectionReport {
+  id                   String              @id @default(uuid())
+  bookingId            String              @unique
+  pestType             PestType
+  severity             InfestationSeverity
+  affectedAreas        String[]            @default([])
+  recommendedTreatment String
+  chemicalsToBeUsed    String[]            @default([])
+  estimatedDuration    String?
+  beforePhotos         String[]            @default([]) // S3 URLs
+  afterPhotos          String[]            @default([]) // S3 URLs
+  status               ReportStatus        @default(PENDING_APPROVAL)
+  approvedAt           DateTime?
+  technicianNotes      String?
+  createdAt            DateTime            @default(now())
+
+  booking Booking @relation(fields: [bookingId], references: [id])
+
+  @@index([bookingId])
+  @@index([status])
+}
+
+model Payment {
+  id                 String        @id @default(uuid())
+  bookingId          String
+  customerId         String
+  amount             Float
+  gst                Float
+  total              Float
+  method             PaymentMethod @default(RAZORPAY)
+  gatewayOrderId     String?
+  gatewayPaymentId   String?
+  gatewaySignature   String?
+  status             PaymentStatus @default(PENDING)
+  invoiceUrl         String?
+  refundId           String?
+  refundStatus       String?
+  createdAt          DateTime      @default(now())
+
+  booking  Booking  @relation(fields: [bookingId], references: [id])
+  customer Customer @relation(fields: [customerId], references: [id])
+
+  @@index([bookingId])
+  @@index([customerId])
+  @@index([status])
+  @@index([gatewayOrderId])
+}
+
+model OTP {
+  id        String     @id @default(uuid())
+  phone     String
+  otp       String     // Hashed
+  purpose   OtpPurpose
+  bookingId String?
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime   @default(now())
+
+  booking Booking? @relation(fields: [bookingId], references: [id])
+
+  @@index([phone, purpose])
+  @@index([bookingId])
+}
+
+model Notification {
+  id            String             @id @default(uuid())
+  recipientId   String
+  recipientType UserRole
+  channel       NotificationChannel
+  templateName  String
+  message       String?
+  payload       Json               @default("{}")
+  status        NotificationStatus @default(QUEUED)
+  sentAt        DateTime?
+  deliveredAt   DateTime?
+  errorMsg      String?
+  bookingId     String?
+  createdAt     DateTime           @default(now())
+
+  booking Booking? @relation(fields: [bookingId], references: [id])
+
+  @@index([recipientId])
+  @@index([status])
+  @@index([bookingId])
+}
+
+model Coupon {
+  id            String       @id @default(uuid())
+  code          String       @unique
+  discountType  DiscountType
+  discountValue Float
+  maxUses       Int          @default(100)
+  usedCount     Int          @default(0)
+  validFrom     DateTime
+  validUntil    DateTime
+  isActive      Boolean      @default(true)
+  createdAt     DateTime     @default(now())
+
+  bookings Booking[]
+
+  @@index([code])
+}
+
+model Review {
+  id         String       @id @default(uuid())
+  bookingId  String       @unique
+  customerId String
+  rating     Int          // 1-5
+  comment    String?
+  status     ReviewStatus @default(PENDING)
+  createdAt  DateTime     @default(now())
+
+  booking  Booking  @relation(fields: [bookingId], references: [id])
+  customer Customer @relation(fields: [customerId], references: [id])
+
+  @@index([customerId])
+  @@index([rating])
+}
+
+model Product {
+  id            String   @id @default(uuid())
+  name          String
+  slug          String   @unique
+  description   String
+  price         Float
+  originalPrice Float?
+  stock         Int      @default(0)
+  category      String
+  pestType      String[] @default([])
+  imageUrls     String[] @default([])
+  badge         String?
+  isActive      Boolean  @default(true)
+  createdAt     DateTime @default(now())
+
+  @@index([slug])
+  @@index([category])
+}
+
+model Order {
+  id               String      @id @default(uuid())
+  customerId       String
+  items            Json        // Array of { productId, name, quantity, price }
+  totalAmount      Float
+  deliveryAddress  String
+  status           OrderStatus @default(PLACED)
+  trackingId       String?
+  shiprocketOrderId String?
+  paymentId        String?
+  createdAt        DateTime    @default(now())
+  updatedAt        DateTime    @updatedAt
+
+  customer Customer @relation(fields: [customerId], references: [id])
+
+  @@index([customerId])
+  @@index([status])
+}
+
+model BlogPost {
+  id          String   @id @default(uuid())
+  slug        String   @unique
+  title       String
+  excerpt     String
+  content     String
+  category    String
+  readTime    String
+  publishedAt DateTime @default(now())
+  authorId    String
+  imageUrl    String?
+  isPublished Boolean  @default(false)
+  tags        String[] @default([])
+  createdAt   DateTime @default(now())
+
+  @@index([slug])
+  @@index([category])
+  @@index([isPublished])
+}
+
+model Branch {
+  id                  String   @id @default(uuid())
+  city                String
+  state               String
+  address             String
+  phone               String
+  email               String
+  lat                 Float
+  lng                 Float
+  mapUrl              String?
+  workingHours        String   @default("9:00 AM - 6:00 PM")
+  serviceablePincodes String[] @default([])
+  isActive            Boolean  @default(true)
+  createdAt           DateTime @default(now())
+
+  @@index([city])
+}
+
+model AuditLog {
+  id         String   @id @default(uuid())
+  actorId    String
+  actorRole  UserRole
+  action     String
+  entityType String
+  entityId   String
+  oldValue   Json?
+  newValue   Json?
+  ip         String?
+  createdAt  DateTime @default(now())
+
+  @@index([actorId])
+  @@index([entityType, entityId])
+  @@index([createdAt])
+}

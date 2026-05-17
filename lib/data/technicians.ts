@@ -1,0 +1,142 @@
+export interface Technician {
+  id: string;
+  name: string;
+  phone: string;
+  city: string;
+  rating: number;
+  jobsToday: number;
+  jobsTotal: number;
+  revenue: number;
+  reServiceRate: number;
+  status: 'Available' | 'On Job' | 'Offline' | 'On Leave';
+  currentJob?: string;
+  skills: string[];
+  joinDate: string;
+  avatar: string | null;
+}
+
+export const mockTechnicians: Technician[] = [
+  {
+    id: 't1',
+    name: 'Rajesh Kumar',
+    phone: '+91 9876543210',
+    city: 'Hyderabad',
+    rating: 4.8,
+    jobsToday: 5,
+    jobsTotal: 487,
+    revenue: 45000,
+    reServiceRate: 2,
+    status: 'On Job',
+    currentJob: 'PSP-2026-84729',
+    skills: ['Cockroach Control', 'General Pest Control', 'Inspection'],
+    joinDate: '2023-01-15',
+    avatar: null,
+  },
+  {
+    id: 't2',
+    name: 'Priya Nair',
+    phone: '+91 9876543211',
+    city: 'Bangalore',
+    rating: 4.9,
+    jobsToday: 3,
+    jobsTotal: 523,
+    revenue: 52000,
+    reServiceRate: 1,
+    status: 'Available',
+    skills: ['Termite Control', 'Rodent Control', 'Inspection'],
+    joinDate: '2022-06-20',
+    avatar: null,
+  },
+  {
+    id: 't3',
+    name: 'Amit Singh',
+    phone: '+91 9876543212',
+    city: 'Delhi',
+    rating: 4.7,
+    jobsToday: 4,
+    jobsTotal: 412,
+    revenue: 38000,
+    reServiceRate: 2,
+    status: 'On Job',
+    currentJob: 'PSP-2026-84725',
+    skills: ['Mosquito Control', 'Fogging', 'Inspection'],
+    joinDate: '2023-03-10',
+    avatar: null,
+  },
+  {
+    id: 't4',
+    name: 'Vikram Patel',
+    phone: '+91 9876543213',
+    city: 'Mumbai',
+    rating: 4.6,
+    jobsToday: 2,
+    jobsTotal: 356,
+    revenue: 32000,
+    reServiceRate: 3,
+    status: 'On Leave',
+    skills: ['Bed Bug Control', 'Cockroach Control', 'Inspection'],
+    joinDate: '2023-07-05',
+    avatar: null,
+  },
+  {
+    id: 't5',
+    name: 'Deepak Sharma',
+    phone: '+91 9876543214',
+    city: 'Hyderabad',
+    rating: 4.8,
+    jobsToday: 6,
+    jobsTotal: 501,
+    revenue: 48000,
+    reServiceRate: 1,
+    status: 'Available',
+    skills: ['Rodent Control', 'General Pest Control', 'Inspection'],
+    joinDate: '2022-11-12',
+    avatar: null,
+  },
+  {
+    id: 't6',
+    name: 'Ananya Singh',
+    phone: '+91 9876543215',
+    city: 'Pune',
+    rating: 4.5,
+    jobsToday: 4,
+    jobsTotal: 298,
+    revenue: 28000,
+    reServiceRate: 2,
+    status: 'Available',
+    skills: ['Termite Control', 'Mosquito Control', 'Inspection'],
+    joinDate: '2024-01-20',
+    avatar: null,
+  },
+  {
+    id: 't7',
+    name: 'Harish Kumar',
+    phone: '+91 9876543216',
+    city: 'Bangalore',
+    rating: 4.7,
+    jobsToday: 3,
+    jobsTotal: 421,
+    revenue: 41000,
+    reServiceRate: 2,
+    status: 'On Job',
+    currentJob: 'PSP-2026-84726',
+    skills: ['Cockroach Control', 'Bed Bug Control', 'Inspection'],
+    joinDate: '2023-04-18',
+    avatar: null,
+  },
+  {
+    id: 't8',
+    name: 'Neha Verma',
+    phone: '+91 9876543217',
+    city: 'Delhi',
+    rating: 4.9,
+    jobsToday: 5,
+    jobsTotal: 489,
+    revenue: 46000,
+    reServiceRate: 1,
+    status: 'Available',
+    skills: ['Mosquito Control', 'Rodent Control', 'General Pest Control'],
+    joinDate: '2022-09-08',
+    avatar: null,
+  },
+];

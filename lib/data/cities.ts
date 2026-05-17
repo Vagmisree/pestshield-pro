@@ -1,0 +1,108 @@
+import { City } from '@/types'
+
+export const cities: City[] = [
+  {
+    id: '1',
+    city: 'Hyderabad',
+    state: 'Telangana',
+    address: '1st Floor, Banjara Towers, Road No. 12, Banjara Hills',
+    phone: '+91 98765 43210',
+    email: 'hyderabad@pestshieldpro.in',
+    mapUrl: 'https://maps.google.com/maps?q=Banjara+Hills+Hyderabad&z=14&output=embed',
+    workingHours: 'Mon–Sat: 8 AM – 8 PM',
+    lat: 17.4125,
+    lng: 78.4357,
+  },
+  {
+    id: '2',
+    city: 'Bengaluru',
+    state: 'Karnataka',
+    address: '4th Floor, MG Road Complex, MG Road, Bengaluru',
+    phone: '+91 98765 43211',
+    email: 'bengaluru@pestshieldpro.in',
+    mapUrl: 'https://maps.google.com/maps?q=MG+Road+Bangalore&z=14&output=embed',
+    workingHours: 'Mon–Sat: 8 AM – 8 PM',
+    lat: 12.9756,
+    lng: 77.6067,
+  },
+  {
+    id: '3',
+    city: 'Mumbai',
+    state: 'Maharashtra',
+    address: '15th Floor, Peninsula Tower, Lower Parel, Mumbai',
+    phone: '+91 98765 43212',
+    email: 'mumbai@pestshieldpro.in',
+    mapUrl: 'https://maps.google.com/maps?q=Lower+Parel+Mumbai&z=14&output=embed',
+    workingHours: 'Mon–Sat: 8 AM – 8 PM',
+    lat: 18.9927,
+    lng: 72.8311,
+  },
+  {
+    id: '4',
+    city: 'Chennai',
+    state: 'Tamil Nadu',
+    address: '3rd Floor, Anna Salai Tower, Anna Salai, Chennai',
+    phone: '+91 98765 43213',
+    email: 'chennai@pestshieldpro.in',
+    mapUrl: 'https://maps.google.com/maps?q=Anna+Salai+Chennai&z=14&output=embed',
+    workingHours: 'Mon–Sat: 8 AM – 8 PM',
+    lat: 13.0602,
+    lng: 80.2495,
+  },
+  {
+    id: '5',
+    city: 'Pune',
+    state: 'Maharashtra',
+    address: '2nd Floor, FC Road Plaza, Fergusson College Road, Pune',
+    phone: '+91 98765 43214',
+    email: 'pune@pestshieldpro.in',
+    mapUrl: 'https://maps.google.com/maps?q=FC+Road+Pune&z=14&output=embed',
+    workingHours: 'Mon–Sat: 8 AM – 8 PM',
+    lat: 18.5204,
+    lng: 73.8567,
+  },
+  {
+    id: '6',
+    city: 'Delhi NCR',
+    state: 'Delhi',
+    address: '6th Floor, Connaught Place, Central Delhi',
+    phone: '+91 98765 43215',
+    email: 'delhi@pestshieldpro.in',
+    mapUrl: 'https://maps.google.com/maps?q=Connaught+Place+Delhi&z=14&output=embed',
+    workingHours: 'Mon–Sat: 8 AM – 8 PM',
+    lat: 28.6329,
+    lng: 77.2195,
+  },
+  {
+    id: '7',
+    city: 'Ahmedabad',
+    state: 'Gujarat',
+    address: '5th Floor, CG Road Business Hub, CG Road, Ahmedabad',
+    phone: '+91 98765 43216',
+    email: 'ahmedabad@pestshieldpro.in',
+    mapUrl: 'https://maps.google.com/maps?q=CG+Road+Ahmedabad&z=14&output=embed',
+    workingHours: 'Mon–Sat: 8 AM – 8 PM',
+    lat: 23.0350,
+    lng: 72.5642,
+  },
+  {
+    id: '8',
+    city: 'Kolkata',
+    state: 'West Bengal',
+    address: '8th Floor, Park Street Plaza, Park Street, Kolkata',
+    phone: '+91 98765 43217',
+    email: 'kolkata@pestshieldpro.in',
+    mapUrl: 'https://maps.google.com/maps?q=Park+Street+Kolkata&z=14&output=embed',
+    workingHours: 'Mon–Sat: 8 AM – 8 PM',
+    lat: 22.5519,
+    lng: 88.3518,
+  },
+]
+
+export function getCityById(id: string): City | undefined {
+  return cities.find(city => city.id === id)
+}
+
+export function getCityByName(cityName: string): City | undefined {
+  return cities.find(city => city.city.toLowerCase() === cityName.toLowerCase())
+}

@@ -1,0 +1,311 @@
+@import 'tailwindcss';
+@import 'tw-animate-css';
+
+@custom-variant dark (&:is(.dark *));
+
+:root {
+  /* PestShield Pro — Organic Luxury Design System */
+  --font-heading: 'Plus Jakarta Sans', sans-serif;
+  --font-body: 'DM Sans', sans-serif;
+  --font-display: 'Syne', sans-serif;
+
+  /* Radius Scale */
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 16px;
+  --radius-xl: 24px;
+  --radius-full: 9999px;
+
+  /* Shadows */
+  --shadow-card: 0 1px 4px rgba(11,61,46,0.06), 0 6px 24px rgba(11,61,46,0.08);
+  --shadow-hover: 0 12px 40px rgba(11,61,46,0.18), 0 4px 12px rgba(0,0,0,0.06);
+  --shadow-glow: 0 0 0 3px rgba(52,211,153,0.25);
+
+  /* Transition */
+  --transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+
+  /* Base semantic colors — Organic Luxury palette */
+  --background: #F7F5F0;
+  --foreground: #1C1917;
+  --card: #FEFCF7;
+  --card-foreground: #1C1917;
+  --popover: #FEFCF7;
+  --popover-foreground: #1C1917;
+  --primary: #16a34a;
+  --primary-foreground: #ffffff;
+  --secondary: #EBE9E3;
+  --secondary-foreground: #1C1917;
+  --muted: #EBE9E3;
+  --muted-foreground: #78716c;
+  --accent: #F59E0B;
+  --accent-foreground: #1C1917;
+  --destructive: #dc2626;
+  --destructive-foreground: #ffffff;
+  --border: #DDD9D0;
+  --input: #DDD9D0;
+  --ring: #34d399;
+  --chart-1: #16a34a;
+  --chart-2: #F59E0B;
+  --chart-3: #3b82f6;
+  --chart-4: #f59e0b;
+  --chart-5: #34d399;
+  --radius: 0.625rem;
+  --sidebar: #F7F5F0;
+  --sidebar-foreground: #1C1917;
+  --sidebar-primary: #16a34a;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #EBE9E3;
+  --sidebar-accent-foreground: #1C1917;
+  --sidebar-border: #DDD9D0;
+  --sidebar-ring: #34d399;
+}
+
+.dark {
+  --background: #0B3D2E;
+  --foreground: #fafafa;
+  --card: #0f4f3a;
+  --card-foreground: #fafafa;
+  --popover: #0f4f3a;
+  --popover-foreground: #fafafa;
+  --primary: #34d399;
+  --primary-foreground: #0B3D2E;
+  --secondary: #145c43;
+  --secondary-foreground: #fafafa;
+  --muted: #145c43;
+  --muted-foreground: #a1a1aa;
+  --accent: #F59E0B;
+  --accent-foreground: #1C1917;
+  --destructive: #7f1d1d;
+  --destructive-foreground: #fafafa;
+  --border: #145c43;
+  --input: #145c43;
+  --ring: #34d399;
+  --sidebar: #071F17;
+  --sidebar-foreground: #fafafa;
+  --sidebar-primary: #34d399;
+  --sidebar-primary-foreground: #0B3D2E;
+  --sidebar-accent: #145c43;
+  --sidebar-accent-foreground: #fafafa;
+  --sidebar-border: #145c43;
+  --sidebar-ring: #34d399;
+}
+
+@theme inline {
+  --font-sans: var(--font-body);
+  --font-heading: var(--font-heading);
+  --font-display: var(--font-display);
+  --font-mono: 'Geist Mono', 'Geist Mono Fallback';
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+
+  /* Brand Colors */
+  --color-brand-50: #f0fdf4;
+  --color-brand-100: #dcfce7;
+  --color-brand-200: #bbf7d0;
+  --color-brand-300: #86efac;
+  --color-brand-400: #4ade80;
+  --color-brand-500: #22c55e;
+  --color-brand-600: #16a34a;
+  --color-brand-700: #15803d;
+  --color-brand-800: #166534;
+  --color-brand-900: #14532d;
+  --color-brand-950: #052e16;
+
+  /* Accent Colors */
+  --color-accent-400: #fbbf24;
+  --color-accent-500: #f59e0b;
+  --color-accent-600: #d97706;
+
+  /* Neutral Colors */
+  --color-neutral-50: #fafafa;
+  --color-neutral-100: #f4f4f5;
+  --color-neutral-200: #e4e4e7;
+  --color-neutral-300: #d4d4d8;
+  --color-neutral-400: #a1a1aa;
+  --color-neutral-500: #71717a;
+  --color-neutral-600: #52525b;
+  --color-neutral-700: #3f3f46;
+  --color-neutral-800: #27272a;
+  --color-neutral-900: #18181b;
+  --color-neutral-950: #09090b;
+
+  /* Forest Colors */
+  --color-forest-950: #071F17;
+  --color-forest-900: #0B3D2E;
+  --color-forest-800: #0f4f3a;
+  --color-forest-700: #145c43;
+
+  /* Cream Colors */
+  --color-cream-50: #FEFCF7;
+  --color-cream-100: #F7F5F0;
+  --color-cream-200: #EBE9E3;
+  --color-cream-300: #DDD9D0;
+
+  /* Emerald Colors */
+  --color-emerald-300: #6ee7b7;
+  --color-emerald-400: #34d399;
+  --color-emerald-500: #10b981;
+
+  /* Ink */
+  --color-ink: #1C1917;
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+    font-size: 16px;
+    line-height: 1.65;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+  html {
+    scroll-behavior: smooth;
+  }
+  /* Ensure all paragraph text is readable */
+  p { color: inherit; }
+  h1, h2, h3, h4, h5, h6 { line-height: 1.15; }
+}
+
+/* ─── Selection ─────────────────────────────────────────────────────────── */
+::selection {
+  background: #34d399;
+  color: #0B3D2E;
+}
+
+/* ─── Scrollbar — Forest themed ─────────────────────────────────────────── */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: #EBE9E3; }
+::-webkit-scrollbar-thumb { background: #16a34a; border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: #15803d; }
+
+/* ─── Organic Texture — use on dark green sections ──────────────────────── */
+.texture-organic {
+  background-image: url("data:image/svg+xml,%3Csvg width='80' height='80' viewBox='0 0 80 80' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' stroke='rgba(255,255,255,0.04)' stroke-width='1'%3E%3Cellipse cx='40' cy='40' rx='30' ry='20' transform='rotate(30 40 40)'/%3E%3Cellipse cx='40' cy='40' rx='30' ry='20' transform='rotate(90 40 40)'/%3E%3Cellipse cx='40' cy='40' rx='30' ry='20' transform='rotate(150 40 40)'/%3E%3C/g%3E%3C/svg%3E");
+  background-size: 80px 80px;
+}
+
+/* ─── Cream Dot Grid — use on light sections ────────────────────────────── */
+.texture-dots {
+  background-image: radial-gradient(circle, #C8C4BB 1px, transparent 1px);
+  background-size: 24px 24px;
+}
+
+/* ─── Gradient Text — emerald to green ──────────────────────────────────── */
+.gradient-text {
+  background: linear-gradient(135deg, #34d399 0%, #16a34a 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* ─── Glassmorphism card ─────────────────────────────────────────────────── */
+.glass-card {
+  background: rgba(255, 255, 255, 0.07);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+/* ─── Emerald Glow ───────────────────────────────────────────────────────── */
+.emerald-glow {
+  box-shadow: 0 0 20px rgba(52, 211, 153, 0.4), 0 0 60px rgba(52, 211, 153, 0.15);
+}
+
+/* ─── WhatsApp Pulse ─────────────────────────────────────────────────────── */
+.whatsapp-pulse::before,
+.whatsapp-pulse::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 9999px;
+  background: #25D366;
+  z-index: -1;
+}
+.whatsapp-pulse::before {
+  animation: pulse-ring 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+.whatsapp-pulse::after {
+  animation: pulse-ring 2s cubic-bezier(0.4, 0, 0.6, 1) infinite 0.5s;
+}
+@keyframes pulse-ring {
+  0% { transform: scale(1); opacity: 0.8; }
+  100% { transform: scale(1.6); opacity: 0; }
+}
+
+/* ─── Scroll Ticker ──────────────────────────────────────────────────────── */
+.scroll-ticker {
+  animation: scroll 30s linear infinite;
+}
+.scroll-ticker:hover {
+  animation-play-state: paused;
+}
+@keyframes scroll {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+.ticker-mask {
+  mask-image: linear-gradient(to right, transparent, black 5%, black 95%, transparent);
+  -webkit-mask-image: linear-gradient(to right, transparent, black 5%, black 95%, transparent);
+}
+
+/* ─── Noise texture overlay ──────────────────────────────────────────────── */
+.texture-noise {
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+  background-repeat: repeat;
+  background-size: 200px 200px;
+}
+
+/* ─── Shimmer loading skeleton ───────────────────────────────────────────── */
+.shimmer {
+  background: linear-gradient(90deg, #EBE9E3 0%, #F7F5F0 50%, #EBE9E3 100%);
+  background-size: 200% 100%;
+  animation: shimmer 2.5s linear infinite;
+}
+
+/* ─── Pill tags ──────────────────────────────────────────────────────────── */
+.pill-emerald {
+  @apply inline-flex items-center px-3 py-1.5 rounded-full text-xs font-bold uppercase tracking-widest bg-emerald-400/10 border border-emerald-400/20 text-emerald-600;
+}
+.pill-emerald-dark {
+  @apply inline-flex items-center px-3 py-1.5 rounded-full text-xs font-bold uppercase tracking-widest bg-emerald-400/15 border border-emerald-400/25 text-emerald-300;
+}
+.pill-amber {
+  @apply inline-flex items-center px-3 py-1.5 rounded-full text-xs font-bold uppercase tracking-widest bg-accent-500/10 border border-accent-500/20 text-accent-600;
+}

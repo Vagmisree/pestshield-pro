@@ -1,0 +1,977 @@
+openapi: 3.0.3
+info:
+  title: PestShield Pro API
+  description: |
+    Complete REST API for PestShield Pro — India's automated pest control platform.
+    All authenticated endpoints require a Bearer JWT token in the Authorization header.
+  version: 1.0.0
+  contact:
+    email: api@pestshieldpro.in
+
+servers:
+  - url: http://localhost:4000/api
+    description: Local development
+  - url: https://pestshieldpro.in/api
+    description: Production
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    Error:
+      type: object
+      properties:
+        success: { type: boolean, example: false }
+        message: { type: string, example: "Validation failed" }
+        code: { type: string, example: "VALIDATION_ERROR" }
+        errors:
+          type: array
+          items:
+            type: object
+            properties:
+              field: { type: string }
+              message: { type: string }
+
+    Booking:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        bookingRef: { type: string, example: "PSP-2026-123456" }
+        status: { type: string, enum: [PENDING, CONFIRMED, TECHNICIAN_ASSIGNED, INSPECTION_DONE, APPROVED, IN_PROGRESS, COMPLETED, CANCELLED, RESCHEDULED] }
+        slotDate: { type: string, format: date }
+        slotTime: { type: string, enum: [MORNING, AFTERNOON, EVENING] }
+        totalAmount: { type: number, example: 1180 }
+        paymentStatus: { type: string, enum: [PENDING, SUCCESS, FAILED, REFUNDED] }
+
+    Review:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        rating: { type: integer, minimum: 1, maximum: 5 }
+        comment: { type: string }
+        status: { type: string, enum: [PENDING, PUBLISHED, REJECTED] }
+
+paths:
+  # ─── Auth ──────────────────────────────────────────────────────────────────
+  /auth/customer/register:
+    post:
+      tags: [Auth]
+      summary: Register a new customer (sends OTP)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name, phone, password]
+              properties:
+                name: { type: string, example: "Priya Sharma" }
+                phone: { type: string, example: "9876543210" }
+                email: { type: string, format: email, example: "priya@example.com" }
+                password: { type: string, minLength: 8, example: "SecurePass1" }
+      responses:
+        '200':
+          description: OTP sent
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean }
+                  data:
+                    type: object
+                    properties:
+                      tempToken: { type: string }
+                      message: { type: string }
+        '409': { description: Phone already registered }
+
+  /auth/customer/verify-otp:
+    post:
+      tags: [Auth]
+      summary: Verify OTP and complete registration
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [tempToken, otp]
+              properties:
+                tempToken: { type: string }
+                otp: { type: string, example: "123456" }
+      responses:
+        '201':
+          description: Registration complete
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean }
+                  data:
+                    type: object
+                    properties:
+                      accessToken: { type: string }
+                      refreshToken: { type: string }
+                      user: { type: object }
+
+  /auth/login:
+    post:
+      tags: [Auth]
+      summary: Login (all roles)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [identifier, password]
+              properties:
+                identifier: { type: string, example: "9876543210" }
+                password: { type: string, example: "SecurePass1" }
+      responses:
+        '200': { description: Login successful }
+        '401': { description: Invalid credentials }
+
+  /auth/refresh:
+    post:
+      tags: [Auth]
+      summary: Refresh access token
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [refreshToken]
+              properties:
+                refreshToken: { type: string }
+      responses:
+        '200': { description: New access token }
+
+  /auth/logout:
+    post:
+      tags: [Auth]
+      summary: Logout (invalidates refresh token)
+      security: [{ BearerAuth: [] }]
+      responses:
+        '200': { description: Logged out }
+
+  /auth/forgot-password:
+    post:
+      tags: [Auth]
+      summary: Send OTP for password reset
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [phone]
+              properties:
+                phone: { type: string, example: "9876543210" }
+      responses:
+        '200': { description: OTP sent if phone exists }
+
+  /auth/reset-password:
+    post:
+      tags: [Auth]
+      summary: Reset password with OTP
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [phone, otp, newPassword]
+              properties:
+                phone: { type: string }
+                otp: { type: string }
+                newPassword: { type: string, minLength: 8 }
+      responses:
+        '200': { description: Password reset }
+
+  /auth/send-otp:
+    post:
+      tags: [Auth]
+      summary: Send booking closure OTP (Technician/Admin only)
+      security: [{ BearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [bookingId]
+              properties:
+                bookingId: { type: string, format: uuid }
+      responses:
+        '200': { description: OTP sent to customer }
+
+  # ─── Bookings ──────────────────────────────────────────────────────────────
+  /bookings:
+    post:
+      tags: [Bookings]
+      summary: Create a new booking
+      security: [{ BearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [serviceId, propertyType, address, pincode, city, slotDate, slotTime]
+              properties:
+                serviceId: { type: string, format: uuid }
+                propertyType: { type: string, enum: [BHK_1, BHK_2, BHK_3, VILLA, APARTMENT, OFFICE, RESTAURANT, HOTEL, INDUSTRIAL] }
+                propertySize: { type: string, example: "1200" }
+                address: { type: string, example: "123 MG Road, Banjara Hills" }
+                pincode: { type: string, example: "500034" }
+                city: { type: string, example: "Hyderabad" }
+                slotDate: { type: string, format: date, example: "2026-06-15" }
+                slotTime: { type: string, enum: [MORNING, AFTERNOON, EVENING] }
+                planType: { type: string, enum: [SINGLE, CONTRACT_RESIDENTIAL, AMC_COMMERCIAL] }
+                couponCode: { type: string, example: "PESTFREE30" }
+      responses:
+        '201':
+          description: Booking created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean }
+                  data:
+                    type: object
+                    properties:
+                      bookingId: { type: string, format: uuid }
+                      bookingRef: { type: string, example: "PSP-2026-123456" }
+                      amount:
+                        type: object
+                        properties:
+                          base: { type: number }
+                          discount: { type: number }
+                          gst: { type: number }
+                          total: { type: number }
+        '400': { description: Pincode not serviceable or validation error }
+
+    get:
+      tags: [Bookings]
+      summary: List bookings (own for customer, all for admin)
+      security: [{ BearerAuth: [] }]
+      parameters:
+        - in: query
+          name: status
+          schema: { type: string }
+        - in: query
+          name: dateFrom
+          schema: { type: string, format: date }
+        - in: query
+          name: dateTo
+          schema: { type: string, format: date }
+        - in: query
+          name: cursor
+          schema: { type: string }
+        - in: query
+          name: limit
+          schema: { type: integer, default: 20 }
+      responses:
+        '200': { description: Paginated booking list }
+
+  /bookings/check-pincode/{pincode}:
+    get:
+      tags: [Bookings]
+      summary: Check if pincode is serviceable (public)
+      parameters:
+        - in: path
+          name: pincode
+          required: true
+          schema: { type: string, example: "500034" }
+      responses:
+        '200':
+          description: Serviceability result
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean }
+                  data:
+                    type: object
+                    properties:
+                      available: { type: boolean }
+                      branches: { type: array, items: { type: object } }
+
+  /bookings/{id}:
+    get:
+      tags: [Bookings]
+      summary: Get full booking detail
+      security: [{ BearerAuth: [] }]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        '200': { description: Booking detail }
+        '404': { description: Not found }
+
+  /bookings/{id}/reschedule:
+    patch:
+      tags: [Bookings]
+      summary: Reschedule booking (customer, min 12 hrs before slot)
+      security: [{ BearerAuth: [] }]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string, format: uuid }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [slotDate, slotTime]
+              properties:
+                slotDate: { type: string, format: date }
+                slotTime: { type: string, enum: [MORNING, AFTERNOON, EVENING] }
+      responses:
+        '200': { description: Rescheduled }
+
+  /bookings/{id}/cancel:
+    patch:
+      tags: [Bookings]
+      summary: Cancel booking
+      security: [{ BearerAuth: [] }]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string, format: uuid }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [reason]
+              properties:
+                reason: { type: string, minLength: 5 }
+      responses:
+        '200': { description: Cancelled }
+
+  /bookings/{id}/approve-report:
+    post:
+      tags: [Bookings]
+      summary: Customer approves inspection report
+      security: [{ BearerAuth: [] }]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        '200': { description: Report approved, service begins }
+
+  /bookings/{id}/close:
+    post:
+      tags: [Bookings]
+      summary: Technician closes booking with OTP
+      security: [{ BearerAuth: [] }]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string, format: uuid }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [otp]
+              properties:
+                otp: { type: string, example: "123456" }
+      responses:
+        '200': { description: Booking completed }
+        '400': { description: Invalid or expired OTP }
+
+  # ─── Payments ──────────────────────────────────────────────────────────────
+  /payments/create-order:
+    post:
+      tags: [Payments]
+      summary: Create Razorpay order
+      security: [{ BearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [bookingId]
+              properties:
+                bookingId: { type: string, format: uuid }
+      responses:
+        '201':
+          description: Razorpay order created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      razorpayOrderId: { type: string }
+                      amount: { type: integer, description: "Amount in paise" }
+                      currency: { type: string, example: "INR" }
+                      keyId: { type: string }
+
+  /payments/verify:
+    post:
+      tags: [Payments]
+      summary: Verify Razorpay payment signature
+      security: [{ BearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [razorpayOrderId, razorpayPaymentId, razorpaySignature, bookingId]
+              properties:
+                razorpayOrderId: { type: string }
+                razorpayPaymentId: { type: string }
+                razorpaySignature: { type: string }
+                bookingId: { type: string, format: uuid }
+      responses:
+        '200': { description: Payment verified }
+        '400': { description: Invalid signature }
+
+  /payments/webhook:
+    post:
+      tags: [Payments]
+      summary: Razorpay webhook (no auth — validated by signature)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        '200': { description: Webhook processed }
+
+  /payments/invoice/{bookingId}:
+    get:
+      tags: [Payments]
+      summary: Get signed invoice URL
+      security: [{ BearerAuth: [] }]
+      parameters:
+        - in: path
+          name: bookingId
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        '200':
+          description: Signed S3 URL (1 hour expiry)
+
+  # ─── Slots ─────────────────────────────────────────────────────────────────
+  /slots/available:
+    get:
+      tags: [Slots]
+      summary: Get available time slots for a date and pincode
+      parameters:
+        - in: query
+          name: date
+          required: true
+          schema: { type: string, format: date, example: "2026-06-15" }
+        - in: query
+          name: pincode
+          required: true
+          schema: { type: string, example: "500034" }
+        - in: query
+          name: pestType
+          schema: { type: string }
+      responses:
+        '200':
+          description: Available slots
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      slots:
+                        type: object
+                        properties:
+                          MORNING: { type: object, properties: { available: { type: boolean }, count: { type: integer } } }
+                          AFTERNOON: { type: object, properties: { available: { type: boolean }, count: { type: integer } } }
+                          EVENING: { type: object, properties: { available: { type: boolean }, count: { type: integer } } }
+
+  # ─── Reports ───────────────────────────────────────────────────────────────
+  /reports:
+    post:
+      tags: [Reports]
+      summary: Create inspection report (technician)
+      security: [{ BearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [bookingId, pestType, severity, affectedAreas, recommendedTreatment, chemicalsToBeUsed]
+              properties:
+                bookingId: { type: string, format: uuid }
+                pestType: { type: string, enum: [COCKROACH, TERMITE, RODENT, MOSQUITO, BED_BUG, GENERAL] }
+                severity: { type: string, enum: [LEVEL_1, LEVEL_2, LEVEL_3, LEVEL_4, LEVEL_5] }
+                affectedAreas: { type: array, items: { type: string } }
+                recommendedTreatment: { type: string }
+                chemicalsToBeUsed: { type: array, items: { type: string } }
+                technicianNotes: { type: string }
+      responses:
+        '201': { description: Report created }
+
+  /reports/{id}/photos:
+    post:
+      tags: [Reports]
+      summary: Upload before/after photos (technician)
+      security: [{ BearerAuth: [] }]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string, format: uuid }
+        - in: query
+          name: type
+          schema: { type: string, enum: [before, after] }
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                photos:
+                  type: array
+                  items: { type: string, format: binary }
+      responses:
+        '200': { description: Photos uploaded }
+
+  /reports/{bookingId}:
+    get:
+      tags: [Reports]
+      summary: Get report for a booking
+      security: [{ BearerAuth: [] }]
+      parameters:
+        - in: path
+          name: bookingId
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        '200': { description: Report with signed photo URLs }
+
+  # ─── Reviews ───────────────────────────────────────────────────────────────
+  /reviews:
+    post:
+      tags: [Reviews]
+      summary: Submit a review (customer, completed bookings only)
+      security: [{ BearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [bookingId, rating]
+              properties:
+                bookingId: { type: string, format: uuid }
+                rating: { type: integer, minimum: 1, maximum: 5, example: 5 }
+                comment: { type: string, example: "Excellent service!" }
+      responses:
+        '201': { description: Review submitted (pending moderation) }
+
+    get:
+      tags: [Reviews]
+      summary: Get published reviews (public)
+      parameters:
+        - in: query
+          name: rating
+          schema: { type: integer }
+        - in: query
+          name: page
+          schema: { type: integer, default: 1 }
+      responses:
+        '200': { description: Published reviews }
+
+  /reviews/aggregate:
+    get:
+      tags: [Reviews]
+      summary: Get review aggregate stats (public, cached 1hr)
+      responses:
+        '200':
+          description: Aggregate stats
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      avgRating: { type: number, example: 4.8 }
+                      totalCount: { type: integer, example: 1247 }
+                      breakdownByStars: { type: object }
+
+  /reviews/{id}/moderate:
+    patch:
+      tags: [Reviews]
+      summary: Moderate a review (admin)
+      security: [{ BearerAuth: [] }]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string, format: uuid }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [status]
+              properties:
+                status: { type: string, enum: [PUBLISHED, REJECTED] }
+      responses:
+        '200': { description: Review moderated }
+
+  # ─── Shop ──────────────────────────────────────────────────────────────────
+  /shop/products:
+    get:
+      tags: [Shop]
+      summary: List products (public)
+      parameters:
+        - in: query
+          name: category
+          schema: { type: string }
+        - in: query
+          name: inStock
+          schema: { type: boolean }
+        - in: query
+          name: sort
+          schema: { type: string, enum: [price_asc, price_desc, newest, rating] }
+      responses:
+        '200': { description: Product list }
+
+  /shop/products/{slug}:
+    get:
+      tags: [Shop]
+      summary: Get product detail (public)
+      parameters:
+        - in: path
+          name: slug
+          required: true
+          schema: { type: string }
+      responses:
+        '200': { description: Product detail }
+
+  /shop/cart/checkout:
+    post:
+      tags: [Shop]
+      summary: Checkout cart (customer)
+      security: [{ BearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [items, deliveryAddress]
+              properties:
+                items:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      productId: { type: string, format: uuid }
+                      quantity: { type: integer, minimum: 1 }
+                deliveryAddress: { type: string }
+                paymentMethod: { type: string, enum: [PREPAID, COD] }
+      responses:
+        '201': { description: Order created }
+
+  # ─── Blog ──────────────────────────────────────────────────────────────────
+  /blog/posts:
+    get:
+      tags: [Blog]
+      summary: List published blog posts (public)
+      parameters:
+        - in: query
+          name: category
+          schema: { type: string }
+        - in: query
+          name: search
+          schema: { type: string }
+        - in: query
+          name: cursor
+          schema: { type: string }
+      responses:
+        '200': { description: Blog posts }
+
+  /blog/posts/{slug}:
+    get:
+      tags: [Blog]
+      summary: Get blog post with related posts (public)
+      parameters:
+        - in: path
+          name: slug
+          required: true
+          schema: { type: string }
+      responses:
+        '200': { description: Blog post }
+
+  /blog/categories:
+    get:
+      tags: [Blog]
+      summary: Get all categories with post count (public)
+      responses:
+        '200': { description: Categories }
+
+  # ─── Branches ──────────────────────────────────────────────────────────────
+  /branches:
+    get:
+      tags: [Branches]
+      summary: Get all active branches (public)
+      responses:
+        '200': { description: Branch list }
+
+  /branches/check-pincode/{pincode}:
+    get:
+      tags: [Branches]
+      summary: Check pincode serviceability (public)
+      parameters:
+        - in: path
+          name: pincode
+          required: true
+          schema: { type: string, example: "500034" }
+      responses:
+        '200':
+          description: Serviceability result
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      available: { type: boolean }
+                      branch: { type: object }
+                      estimatedResponseTime: { type: string, example: "2-4 hours" }
+
+  # ─── Admin ─────────────────────────────────────────────────────────────────
+  /admin/dashboard:
+    get:
+      tags: [Admin]
+      summary: Get all dashboard widget data in one call
+      security: [{ BearerAuth: [] }]
+      responses:
+        '200': { description: Dashboard data }
+
+  /admin/bookings:
+    get:
+      tags: [Admin]
+      summary: All bookings with full filters + CSV export
+      security: [{ BearerAuth: [] }]
+      parameters:
+        - in: query
+          name: format
+          schema: { type: string, enum: [json, csv] }
+        - in: query
+          name: status
+          schema: { type: string }
+        - in: query
+          name: dateFrom
+          schema: { type: string, format: date }
+      responses:
+        '200': { description: Bookings or CSV file }
+
+  /admin/bookings/{id}/reassign:
+    patch:
+      tags: [Admin]
+      summary: Manually reassign technician
+      security: [{ BearerAuth: [] }]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string, format: uuid }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [technicianId]
+              properties:
+                technicianId: { type: string, format: uuid }
+      responses:
+        '200': { description: Reassigned }
+
+  /admin/revenue:
+    get:
+      tags: [Admin]
+      summary: Revenue report with GST breakdown
+      security: [{ BearerAuth: [] }]
+      parameters:
+        - in: query
+          name: dateFrom
+          schema: { type: string, format: date }
+        - in: query
+          name: dateTo
+          schema: { type: string, format: date }
+        - in: query
+          name: format
+          schema: { type: string, enum: [json, csv] }
+      responses:
+        '200': { description: Revenue data or CSV }
+
+  /admin/analytics:
+    get:
+      tags: [Admin]
+      summary: Analytics data (charts, leaderboard, heatmap)
+      security: [{ BearerAuth: [] }]
+      responses:
+        '200': { description: Analytics data }
+
+  /admin/coupons:
+    post:
+      tags: [Admin]
+      summary: Create coupon
+      security: [{ BearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [code, discountType, discountValue, validFrom, validUntil]
+              properties:
+                code: { type: string, example: "PESTFREE30" }
+                discountType: { type: string, enum: [PERCENT, FLAT] }
+                discountValue: { type: number, example: 30 }
+                maxUses: { type: integer, example: 500 }
+                validFrom: { type: string, format: date-time }
+                validUntil: { type: string, format: date-time }
+      responses:
+        '201': { description: Coupon created }
+
+    get:
+      tags: [Admin]
+      summary: List all coupons with usage stats
+      security: [{ BearerAuth: [] }]
+      responses:
+        '200': { description: Coupon list }
+
+  # ─── Customers ─────────────────────────────────────────────────────────────
+  /customers/me:
+    get:
+      tags: [Customers]
+      summary: Get own profile
+      security: [{ BearerAuth: [] }]
+      responses:
+        '200': { description: Customer profile }
+
+    patch:
+      tags: [Customers]
+      summary: Update profile
+      security: [{ BearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name: { type: string }
+                email: { type: string, format: email }
+      responses:
+        '200': { description: Profile updated }
+
+  /customers/complaints:
+    post:
+      tags: [Customers]
+      summary: Submit complaint or re-service request
+      security: [{ BearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [bookingId, type, description]
+              properties:
+                bookingId: { type: string, format: uuid }
+                type: { type: string, enum: [RE_SERVICE, COMPLAINT] }
+                description: { type: string, minLength: 10 }
+      responses:
+        '201': { description: Complaint submitted }
+
+    get:
+      tags: [Customers]
+      summary: Get own complaints
+      security: [{ BearerAuth: [] }]
+      responses:
+        '200': { description: Complaint list }
+
+  # ─── Technicians ───────────────────────────────────────────────────────────
+  /technicians/{id}/location:
+    patch:
+      tags: [Technicians]
+      summary: Update technician location (called by mobile app every 5 min)
+      security: [{ BearerAuth: [] }]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string, format: uuid }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [lat, lng]
+              properties:
+                lat: { type: number, example: 17.385 }
+                lng: { type: number, example: 78.4867 }
+      responses:
+        '200': { description: Location updated }
+
+  /technicians/{id}/tasks:
+    get:
+      tags: [Technicians]
+      summary: Get today's and upcoming tasks
+      security: [{ BearerAuth: [] }]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        '200': { description: Task list with Maps links }
+
+  /technicians/map:
+    get:
+      tags: [Technicians]
+      summary: Get live technician map data (admin)
+      security: [{ BearerAuth: [] }]
+      responses:
+        '200': { description: Technician locations }

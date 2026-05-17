@@ -1,0 +1,78 @@
+version: '3.9'
+
+services:
+  nginx:
+    image: nginx:alpine
+    container_name: pestshield-nginx
+    restart: unless-stopped
+    ports:
+      - '80:80'
+      - '443:443'
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+      - /etc/letsencrypt:/etc/letsencrypt:ro
+      - /var/www/certbot:/var/www/certbot:ro
+    depends_on:
+      - api
+    networks:
+      - pestshield-net
+
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: pestshield-api
+    restart: unless-stopped
+    expose:
+      - '4000'
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: ${DATABASE_URL}
+      REDIS_URL: ${REDIS_URL}
+      JWT_SECRET: ${JWT_SECRET}
+      REFRESH_TOKEN_SECRET: ${REFRESH_TOKEN_SECRET}
+      RAZORPAY_KEY_ID: ${RAZORPAY_KEY_ID}
+      RAZORPAY_KEY_SECRET: ${RAZORPAY_KEY_SECRET}
+      RAZORPAY_WEBHOOK_SECRET: ${RAZORPAY_WEBHOOK_SECRET}
+      INTERAKT_API_KEY: ${INTERAKT_API_KEY}
+      MSG91_AUTH_KEY: ${MSG91_AUTH_KEY}
+      SENDGRID_API_KEY: ${SENDGRID_API_KEY}
+      AWS_ACCESS_KEY: ${AWS_ACCESS_KEY}
+      AWS_SECRET_KEY: ${AWS_SECRET_KEY}
+      AWS_BUCKET_NAME: ${AWS_BUCKET_NAME}
+      AWS_REGION: ${AWS_REGION}
+      GOOGLE_MAPS_API_KEY: ${GOOGLE_MAPS_API_KEY}
+      CORS_ORIGIN: https://pestshieldpro.in
+    depends_on:
+      - redis
+    networks:
+      - pestshield-net
+    healthcheck:
+      test: ['CMD', 'wget', '-qO-', 'http://localhost:4000/api/health']
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  redis:
+    image: redis:7-alpine
+    container_name: pestshield-redis-prod
+    restart: unless-stopped
+    command: redis-server --requirepass ${REDIS_PASSWORD}
+    volumes:
+      - redisdata:/data
+    networks:
+      - pestshield-net
+    # For production, use AWS ElastiCache instead and remove this service
+
+  # NOTE: For production DB, use AWS RDS PostgreSQL instead of this container.
+  # Set DATABASE_URL to your RDS endpoint and remove the postgres service below.
+  # postgres:
+  #   image: postgres:16-alpine
+  #   ...
+
+volumes:
+  redisdata:
+
+networks:
+  pestshield-net:
+    driver: bridge
