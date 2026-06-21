@@ -6,14 +6,15 @@ import { plans } from '@/lib/data/plans';
 import { mockCoupons } from '@/lib/data/coupons';
 import { useState } from 'react';
 import { format } from 'date-fns';
-import { Check, Shield, ArrowRight, Tag } from 'lucide-react';
+import { Check, Shield, ArrowRight, Tag, PlusCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { motion, AnimatePresence } from 'framer-motion';
+import { toast } from 'sonner';
 
 interface Step6Props { onNext: () => void; onBack: () => void; onJumpToStep: (step: number) => void }
 
 export function Step6Review({ onNext, onBack, onJumpToStep }: Step6Props) {
-  const { selectedService, selectedPlan, selectedDate, selectedTimeSlot, formData, propertyType, applyCoupon, couponDiscount, couponCode: appliedCode } = useBookingStore();
+  const { selectedService, selectedPlan, selectedDate, selectedTimeSlot, formData, propertyType, applyCoupon, couponDiscount, couponCode: appliedCode, saveCurrentToCart, cart } = useBookingStore();
   const [couponInput, setCouponInput] = useState('');
   const [couponState, setCouponState] = useState<'idle' | 'success' | 'error'>('idle');
   const [couponMsg, setCouponMsg] = useState('');
@@ -135,6 +136,27 @@ export function Step6Review({ onNext, onBack, onJumpToStep }: Step6Props) {
             A certified, background-verified technician will be assigned automatically within 5 minutes of payment.
           </p>
         </div>
+      </div>
+
+      {/* Add Another Property */}
+      <div className="mt-4 p-4 bg-emerald-50 border border-emerald-200 rounded-2xl">
+        <p className="text-sm font-medium text-emerald-800 mb-2">Need pest control at another address?</p>
+        <button
+          type="button"
+          onClick={() => {
+            saveCurrentToCart();
+            toast.success('Booking added to cart! Add another or proceed to pay.');
+          }}
+          className="flex items-center gap-2 text-sm font-semibold text-brand-600 hover:text-brand-700 transition-colors"
+        >
+          <PlusCircle className="w-4 h-4" />
+          Add Another Property / Service
+        </button>
+        {cart.length > 0 && (
+          <p className="text-xs text-neutral-500 mt-1">
+            {cart.length} booking{cart.length > 1 ? 's' : ''} already in cart
+          </p>
+        )}
       </div>
 
       <div className="flex gap-3">

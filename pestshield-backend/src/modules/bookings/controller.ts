@@ -2,6 +2,18 @@ import { Request, Response, NextFunction } from 'express';
 import * as bookingService from './service.js';
 import type { CreateBookingInput, RescheduleInput, CancelInput, CloseBookingInput, BookingListQuery } from './schemas.js';
 
+export async function bulkCreate(req: Request, res: Response, next: NextFunction) {
+  try {
+    const customerId = req.user!.userId;
+    const { bookings } = req.body;
+    if (!Array.isArray(bookings) || bookings.length === 0) {
+      return res.status(400).json({ success: false, message: 'bookings array is required' });
+    }
+    const results = await bookingService.bulkCreateBookings(customerId, bookings);
+    return res.status(201).json({ success: true, data: results });
+  } catch (err) { next(err); }
+}
+
 export async function createBooking(req: Request, res: Response, next: NextFunction) {
   try {
     const customerId = req.user!.userId;

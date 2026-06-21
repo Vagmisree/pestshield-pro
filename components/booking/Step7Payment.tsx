@@ -5,6 +5,7 @@ import { useBookingStore } from '@/stores/useBookingStore';
 import { plans } from '@/lib/data/plans';
 import { Lock, AlertCircle, CreditCard, Smartphone, Globe } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { format } from 'date-fns';
 
 interface Step7Props { onNext: () => void; onBack: () => void }
 
@@ -14,15 +15,25 @@ const paymentMethods = [
   { id: 'netbanking', label: 'Net Banking (Mock)', icon: Globe, sub: 'All major banks' },
 ];
 
+function formatDate(date: Date | null) {
+  if (!date) return '—';
+  try { return format(new Date(date), 'dd MMM'); } catch { return '—'; }
+}
+
 export function Step7Payment({ onNext, onBack }: Step7Props) {
-  const { selectedPlan, couponDiscount, submitAndPay, isSubmitting, submitError } = useBookingStore();
+  const {
+    selectedPlan, couponDiscount, submitAndPay, isSubmitting, submitError,
+    cart, selectedService, formData, pricing, getTotalCartAmount,
+    selectedDate, selectedTimeSlot,
+  } = useBookingStore();
   const [paymentMethod, setPaymentMethod] = useState('upi');
   const [showMockDialog, setShowMockDialog] = useState(false);
 
   const plan = plans.find((p) => p.name === selectedPlan);
-  const baseAmount = plan?.price || 0;
-  const gst = Math.round(baseAmount * 0.18);
-  const total = baseAmount + gst - couponDiscount;
+  const baseAmount = pricing?.baseAmount || plan?.price || 0;
+  const gst = pricing?.gstAmount || Math.round(baseAmount * 0.18);
+  const currentTotal = pricing?.totalAmount || (baseAmount + gst - couponDiscount);
+  const grandTotal = cart.length > 0 ? getTotalCartAmount() : currentTotal;
 
   const handlePayNow = () => setShowMockDialog(true);
 
@@ -40,21 +51,54 @@ export function Step7Payment({ onNext, onBack }: Step7Props) {
       <h2 className="font-display font-bold text-2xl text-ink mb-1">Complete Payment</h2>
       <p className="text-neutral-500 text-sm mb-6">Choose your payment method</p>
 
-      {/* Amount card */}
-      <div className="relative bg-forest-900 texture-organic rounded-2xl p-6 mb-6 overflow-hidden">
-        <p className="text-white/85 text-sm mb-1">Total Payable</p>
-        <p className="text-5xl font-display font-black text-white">₹{total.toLocaleString()}</p>
-        <div className="flex flex-wrap gap-4 mt-3 text-sm">
-          <span className="text-white/85">Base: ₹{baseAmount.toLocaleString()}</span>
-          <span className="text-white/85">GST 18%: ₹{gst.toLocaleString()}</span>
-          {couponDiscount > 0 && <span className="text-emerald-400">-₹{couponDiscount.toLocaleString()} off</span>}
-        </div>
-        {process.env.NEXT_PUBLIC_MOCK_PAYMENT === 'true' && (
-          <div className="mt-3 inline-flex items-center gap-1.5 bg-amber-400/20 border border-amber-400/30 rounded-full px-3 py-1">
-            <span className="text-amber-300 text-xs font-bold">🧪 Mock Payment Mode</span>
+      {/* Cart summary — shown when multiple bookings */}
+      {cart.length > 0 && (
+        <div className="space-y-3 mb-5">
+          <p className="text-sm font-semibold text-neutral-600">All Bookings in Cart</p>
+          {cart.map((d, i) => (
+            <div key={d.cartId} className="flex justify-between items-center p-3 bg-cream-50 rounded-xl border border-cream-300">
+              <div>
+                <p className="text-sm font-medium text-ink">Booking {i + 1}: {d.selectedService}</p>
+                <p className="text-xs text-neutral-500">{d.formData.address.slice(0, 40)}</p>
+                <p className="text-xs text-neutral-500">{formatDate(d.selectedDate)} · {d.selectedTimeSlot}</p>
+              </div>
+              <p className="font-bold text-brand-600">₹{d.pricing?.totalAmount.toLocaleString() || '—'}</p>
+            </div>
+          ))}
+          {/* Current booking */}
+          <div className="flex justify-between items-center p-3 bg-emerald-50 rounded-xl border border-emerald-200">
+            <div>
+              <p className="text-sm font-medium text-ink">Booking {cart.length + 1}: {selectedService} ✦ Current</p>
+              <p className="text-xs text-neutral-500">{formData.address.slice(0, 40)}</p>
+              <p className="text-xs text-neutral-500">{formatDate(selectedDate)} · {selectedTimeSlot}</p>
+            </div>
+            <p className="font-bold text-brand-600">₹{currentTotal.toLocaleString()}</p>
           </div>
-        )}
-      </div>
+          {/* Grand total */}
+          <div className="flex justify-between items-center p-3 bg-ink text-white rounded-xl">
+            <p className="font-semibold">Grand Total ({cart.length + 1} bookings)</p>
+            <p className="font-bold text-lg">₹{grandTotal.toLocaleString()}</p>
+          </div>
+        </div>
+      )}
+
+      {/* Amount card — single booking */}
+      {cart.length === 0 && (
+        <div className="relative bg-forest-900 texture-organic rounded-2xl p-6 mb-6 overflow-hidden">
+          <p className="text-white/85 text-sm mb-1">Total Payable</p>
+          <p className="text-5xl font-display font-black text-white">₹{currentTotal.toLocaleString()}</p>
+          <div className="flex flex-wrap gap-4 mt-3 text-sm">
+            <span className="text-white/85">Base: ₹{baseAmount.toLocaleString()}</span>
+            <span className="text-white/85">GST 18%: ₹{gst.toLocaleString()}</span>
+            {couponDiscount > 0 && <span className="text-emerald-400">-₹{couponDiscount.toLocaleString()} off</span>}
+          </div>
+          {process.env.NEXT_PUBLIC_MOCK_PAYMENT === 'true' && (
+            <div className="mt-3 inline-flex items-center gap-1.5 bg-amber-400/20 border border-amber-400/30 rounded-full px-3 py-1">
+              <span className="text-amber-300 text-xs font-bold">🧪 Mock Payment Mode</span>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Error */}
       {submitError && (
@@ -92,7 +136,9 @@ export function Step7Payment({ onNext, onBack }: Step7Props) {
         className="w-full py-4 bg-accent-500 hover:bg-accent-600 text-white font-bold text-lg rounded-2xl flex items-center justify-center gap-3 shadow-md hover:shadow-lg transition-all disabled:opacity-60 disabled:cursor-not-allowed mt-6 relative overflow-hidden group">
         <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/15 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700" />
         <Lock className="w-5 h-5 relative z-10" />
-        <span className="relative z-10">{isSubmitting ? 'Processing...' : `Pay ₹${total.toLocaleString()} Securely`}</span>
+        <span className="relative z-10">
+          {isSubmitting ? 'Processing...' : `Pay ₹${grandTotal.toLocaleString()} Securely`}
+        </span>
       </button>
       <p className="text-center text-xs text-neutral-400 mt-3">
         🔒 256-bit encrypted · PCI-DSS compliant · Never stored on our servers
@@ -114,8 +160,10 @@ export function Step7Payment({ onNext, onBack }: Step7Props) {
               This is a mock payment. In production, you would be redirected to {paymentMethod === 'upi' ? 'UPI' : paymentMethod === 'card' ? 'card payment' : 'net banking'} gateway.
             </p>
             <div className="bg-cream-100 rounded-xl p-4 mb-6 text-left">
-              <p className="text-xs text-neutral-500 mb-1">Amount</p>
-              <p className="font-display font-black text-2xl text-ink">₹{total.toLocaleString()}</p>
+              <p className="text-xs text-neutral-500 mb-1">
+                {cart.length > 0 ? `${cart.length + 1} Bookings` : 'Amount'}
+              </p>
+              <p className="font-display font-black text-2xl text-ink">₹{grandTotal.toLocaleString()}</p>
               <p className="text-xs text-neutral-400 mt-1">Mock transaction ID: pay_mock_demo</p>
             </div>
             <button onClick={handleMockPay}

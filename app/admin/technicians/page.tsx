@@ -4,26 +4,68 @@ import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { fadeInUp, stagger } from '@/lib/animations';
 import { mockTechnicians } from '@/lib/data/technicians';
-import { Search, Star, Phone, Mail, MapPin, X } from 'lucide-react';
+import { Search, Star, MoreVertical } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { toast } from 'sonner';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
 
-const statusColors: Record<string, string> = {
-  Available: 'bg-emerald-400/15 text-emerald-700',
+const availabilityColors: Record<string, string> = {
+  AVAILABLE: 'bg-emerald-100 text-emerald-700',
+  BUSY: 'bg-amber-100 text-amber-700',
+  OFF_DUTY: 'bg-neutral-100 text-neutral-500',
+  Available: 'bg-emerald-100 text-emerald-700',
   'On Job': 'bg-amber-100 text-amber-700',
-  'On Leave': 'bg-neutral-100 text-neutral-600',
+  'On Leave': 'bg-neutral-100 text-neutral-500',
   Offline: 'bg-red-100 text-red-600',
 };
 
 export default function AdminTechniciansPage() {
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedTech, setSelectedTech] = useState<typeof mockTechnicians[0] | null>(null);
+  const [blockedIds, setBlockedIds] = useState<Set<string>>(new Set());
 
   const filtered = mockTechnicians.filter((t) =>
     t.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
     t.city.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  const availableCount = mockTechnicians.filter(t => t.status === 'Available').length;
+  const availableCount = mockTechnicians.filter(t =>
+    t.status === 'Available' || t.status === 'AVAILABLE'
+  ).length;
+
+  const viewHistory = (id: string) => {
+    toast.info(`Viewing job history for technician ${id}`);
+  };
+
+  const toggleBlock = (id: string) => {
+    setBlockedIds(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) {
+        next.delete(id);
+        toast.success('Technician unblocked');
+      } else {
+        next.add(id);
+        toast.success('Technician blocked');
+      }
+      return next;
+    });
+  };
+
+  const editTechnician = (id: string) => {
+    toast.info(`Edit skills for technician ${id}`);
+  };
 
   return (
     <div className="space-y-6">
@@ -58,120 +100,90 @@ export default function AdminTechniciansPage() {
         />
       </div>
 
-      {/* Grid */}
-      <motion.div variants={stagger} initial="hidden" animate="visible" className="grid md:grid-cols-2 lg:grid-cols-3 gap-5">
-        {filtered.map((tech) => (
-          <motion.div
-            key={tech.id}
-            variants={fadeInUp}
-            onClick={() => setSelectedTech(tech)}
-            className="bg-card rounded-2xl border border-cream-300 shadow-card p-5 hover:shadow-hover transition-all cursor-pointer"
-          >
-            {/* Avatar + name */}
-            <div className="flex items-center gap-3 mb-4">
-              <div className="w-12 h-12 rounded-full bg-brand-100 flex items-center justify-center text-brand-700 font-bold text-lg flex-shrink-0">
-                {tech.name.charAt(0)}
-              </div>
-              <div>
-                <h3 className="font-heading font-bold text-ink">{tech.name}</h3>
-                <p className="text-xs text-neutral-500 flex items-center gap-1">
-                  <MapPin className="w-3 h-3" /> {tech.city}
-                </p>
-              </div>
-            </div>
-
-            {/* Skill tags */}
-            <div className="flex flex-wrap gap-1.5 mb-4">
-              {tech.skills.slice(0, 2).map((s) => (
-                <span key={s} className="px-2 py-0.5 bg-cream-200 text-neutral-600 text-xs rounded-full">{s}</span>
-              ))}
-            </div>
-
-            {/* Rating + status */}
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-1">
-                {[...Array(5)].map((_, i) => (
-                  <Star key={i} className={cn('w-3.5 h-3.5', i < Math.floor(tech.rating) ? 'fill-accent-500 text-accent-500' : 'text-cream-300')} />
-                ))}
-                <span className="text-xs text-neutral-500 ml-1">({tech.rating})</span>
-              </div>
-              <span className={cn('px-2.5 py-1 rounded-full text-xs font-medium', statusColors[tech.status] || 'bg-neutral-100 text-neutral-600')}>
-                {tech.status}
-              </span>
-            </div>
-
-            <div className="mt-3 pt-3 border-t border-cream-200 flex items-center justify-between text-xs text-neutral-500">
-              <span>{tech.jobsTotal} jobs</span>
-              <span>₹{tech.revenue.toLocaleString()} revenue</span>
-            </div>
-          </motion.div>
-        ))}
-      </motion.div>
-
-      {/* Detail Modal */}
-      {selectedTech && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50" onClick={() => setSelectedTech(null)}>
-          <motion.div
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            className="bg-card rounded-2xl shadow-hover max-w-md w-full p-6"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="flex items-start justify-between mb-5">
-              <div className="flex items-center gap-3">
-                <div className="w-14 h-14 rounded-full bg-brand-100 flex items-center justify-center text-brand-700 font-bold text-xl">
-                  {selectedTech.name.charAt(0)}
-                </div>
-                <div>
-                  <h3 className="font-heading font-bold text-ink">{selectedTech.name}</h3>
-                  <span className={cn('px-2.5 py-0.5 rounded-full text-xs font-medium', statusColors[selectedTech.status])}>
-                    {selectedTech.status}
-                  </span>
-                </div>
-              </div>
-              <button onClick={() => setSelectedTech(null)} className="p-2 hover:bg-cream-200 rounded-xl transition-colors">
-                <X className="w-4 h-4 text-neutral-500" />
-              </button>
-            </div>
-
-            <div className="space-y-3 mb-5">
-              <div className="flex items-center gap-2 text-sm text-neutral-600">
-                <Phone className="w-4 h-4 text-brand-600" /> {selectedTech.phone}
-              </div>
-              <div className="flex items-center gap-2 text-sm text-neutral-600">
-                <MapPin className="w-4 h-4 text-brand-600" /> {selectedTech.city}
-              </div>
-              <div className="flex items-center gap-1">
-                {[...Array(5)].map((_, i) => (
-                  <Star key={i} className={cn('w-4 h-4', i < Math.floor(selectedTech.rating) ? 'fill-accent-500 text-accent-500' : 'text-cream-300')} />
-                ))}
-                <span className="text-sm font-medium text-ink ml-1">{selectedTech.rating}/5</span>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-3 gap-3 p-4 bg-cream-100 rounded-xl mb-5">
-              <div className="text-center">
-                <p className="text-xl font-black font-heading text-ink">{selectedTech.jobsTotal}</p>
-                <p className="text-xs text-neutral-500">Total Jobs</p>
-              </div>
-              <div className="text-center">
-                <p className="text-xl font-black font-heading text-ink">{selectedTech.jobsToday}</p>
-                <p className="text-xs text-neutral-500">Today</p>
-              </div>
-              <div className="text-center">
-                <p className="text-xl font-black font-heading text-ink">{selectedTech.reServiceRate}%</p>
-                <p className="text-xs text-neutral-500">Re-service</p>
-              </div>
-            </div>
-
-            <div className="flex flex-wrap gap-1.5">
-              {selectedTech.skills.map((s) => (
-                <span key={s} className="px-2.5 py-1 bg-brand-50 text-brand-700 text-xs rounded-full border border-brand-200">{s}</span>
-              ))}
-            </div>
-          </motion.div>
+      {/* Performance Table */}
+      <div className="bg-card rounded-2xl border border-cream-300 shadow-card overflow-hidden">
+        <div className="p-5 border-b border-cream-200">
+          <h3 className="font-display font-bold text-ink">Technician Performance</h3>
         </div>
-      )}
+        <div className="overflow-x-auto">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Technician</TableHead>
+                <TableHead>Skills</TableHead>
+                <TableHead>Today</TableHead>
+                <TableHead>This Month</TableHead>
+                <TableHead>Avg Rating</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead>Actions</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {filtered.map((t) => {
+                const isBlocked = blockedIds.has(t.id);
+                const availStatus = t.status === 'Available' ? 'AVAILABLE'
+                  : t.status === 'On Job' ? 'BUSY'
+                  : 'OFF_DUTY';
+                return (
+                  <TableRow key={t.id} className={cn(isBlocked && 'opacity-50')}>
+                    <TableCell>
+                      <div className="flex items-center gap-3">
+                        <div className="w-9 h-9 rounded-xl bg-brand-100 flex items-center justify-center text-brand-700 font-bold text-sm flex-shrink-0">
+                          {t.name.charAt(0)}
+                        </div>
+                        <div>
+                          <p className="font-medium text-ink text-sm">{t.name}</p>
+                          <p className="text-xs text-neutral-500">{t.phone}</p>
+                        </div>
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex flex-wrap gap-1">
+                        {(t.skills || []).slice(0, 2).map((s: string) => (
+                          <span key={s} className="text-xs bg-brand-50 text-brand-700 px-2 py-0.5 rounded-full">{s}</span>
+                        ))}
+                      </div>
+                    </TableCell>
+                    <TableCell className="font-bold text-ink">{t.jobsToday || 0}</TableCell>
+                    <TableCell className="text-neutral-600">{t.jobsTotal || 0}</TableCell>
+                    <TableCell>
+                      <div className="flex items-center gap-1">
+                        <Star className="w-3 h-3 text-amber-400 fill-amber-400" />
+                        <span className="text-sm font-medium">{t.rating?.toFixed(1) || '—'}</span>
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <span className={cn('text-xs font-medium px-2 py-0.5 rounded-full', availabilityColors[t.status] || 'bg-neutral-100 text-neutral-500')}>
+                        {isBlocked ? 'Blocked' : t.status}
+                      </span>
+                    </TableCell>
+                    <TableCell>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <button className="text-neutral-400 hover:text-ink p-1 rounded-lg hover:bg-cream-100 transition-colors">
+                            <MoreVertical className="w-4 h-4" />
+                          </button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem onClick={() => viewHistory(t.id)}>
+                            View Job History
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => toggleBlock(t.id)}>
+                            {isBlocked ? 'Unblock' : 'Block'}
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => editTechnician(t.id)}>
+                            Edit Skills
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </TableCell>
+                  </TableRow>
+                );
+              })}
+            </TableBody>
+          </Table>
+        </div>
+      </div>
     </div>
   );
 }

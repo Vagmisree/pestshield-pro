@@ -7,12 +7,13 @@ import { Copy, Check, Calendar, Shield } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import confetti from 'canvas-confetti';
+import Link from 'next/link';
 
 interface Step8Props { onReset: () => void }
 
 export function Step8Confirmation({ onReset }: Step8Props) {
   const router = useRouter();
-  const { bookingId, selectedService, selectedDate, selectedTimeSlot } = useBookingStore();
+  const { bookingId, bookingRef, selectedService, selectedDate, selectedTimeSlot, confirmedOrders, clearCart } = useBookingStore();
   const [copied, setCopied] = useState(false);
 
   useEffect(() => {
@@ -23,15 +24,17 @@ export function Step8Confirmation({ onReset }: Step8Props) {
       colors: ['#34d399', '#f59e0b', '#ffffff', '#16a34a'],
       gravity: 0.8,
     });
-  }, []);
+    // Clear cart after successful payment
+    clearCart();
+  }, [clearCart]);
 
-  const handleCopy = () => {
-    if (bookingId) {
-      navigator.clipboard.writeText(bookingId);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    }
+  const handleCopy = (text: string) => {
+    navigator.clipboard.writeText(text);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
   };
+
+  const displayRef = bookingRef || bookingId || '';
 
   return (
     <div className="min-h-screen bg-cream-100 flex items-center justify-center px-4 py-12">
@@ -63,43 +66,76 @@ export function Step8Confirmation({ onReset }: Step8Props) {
         </div>
 
         <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5 }}>
-          <h1 className="font-display text-3xl font-bold text-ink mb-2">Booking Confirmed! 🎉</h1>
-          <p className="text-neutral-500 mb-8">Your pest control service has been booked successfully</p>
 
-          {/* Booking ID card — dark forest */}
-          <div className="bg-forest-900 rounded-2xl p-6 mb-6 text-center">
-            <p className="text-white/60 text-xs uppercase tracking-wider mb-2">Your Booking ID</p>
-            <div className="flex items-center justify-center gap-3">
-              <code className="font-mono font-black text-2xl text-emerald-400">{bookingId}</code>
-              <button
-                onClick={handleCopy}
-                className="p-2 rounded-xl bg-white/10 hover:bg-white/20 transition-colors"
-              >
-                {copied ? <Check className="w-4 h-4 text-emerald-400" /> : <Copy className="w-4 h-4 text-white/60" />}
-              </button>
-            </div>
-            <p className="text-white/40 text-xs mt-2">Save this for your records</p>
-          </div>
+          {/* Multi-booking confirmation */}
+          {confirmedOrders.length > 1 ? (
+            <>
+              <h1 className="font-display text-3xl font-bold text-ink mb-2">
+                {confirmedOrders.length} Bookings Confirmed! 🎉
+              </h1>
+              <p className="text-neutral-500 mb-6">All your pest control services have been booked</p>
 
-          {/* Quick summary */}
-          <div className="bg-card rounded-2xl border border-cream-300 p-5 mb-6 text-left space-y-3">
-            <div className="flex items-center gap-3">
-              <Shield className="w-4 h-4 text-brand-600" />
-              <div>
-                <p className="text-xs text-neutral-500">Service</p>
-                <p className="text-sm font-semibold text-ink">{selectedService}</p>
+              <div className="space-y-3 mb-6">
+                {confirmedOrders.map((order, i) => (
+                  <div key={order.bookingRef} className="flex items-center justify-between p-3 bg-cream-50 rounded-xl border border-cream-300 text-left">
+                    <div>
+                      <p className="text-sm font-medium text-ink">Booking {i + 1}</p>
+                      <p className="text-xs text-neutral-500">{order.service}</p>
+                    </div>
+                    <div className="text-right">
+                      <p className="font-mono font-bold text-brand-600 text-sm">{order.bookingRef}</p>
+                      <Link
+                        href={`/booking-status/${order.bookingRef}`}
+                        className="text-xs text-brand-600 underline"
+                      >
+                        Track →
+                      </Link>
+                    </div>
+                  </div>
+                ))}
               </div>
-            </div>
-            <div className="flex items-center gap-3">
-              <Calendar className="w-4 h-4 text-brand-600" />
-              <div>
-                <p className="text-xs text-neutral-500">Scheduled</p>
-                <p className="text-sm font-semibold text-ink">{selectedDate?.toLocaleDateString('en-IN')} • {selectedTimeSlot}</p>
-              </div>
-            </div>
-          </div>
+            </>
+          ) : (
+            <>
+              <h1 className="font-display text-3xl font-bold text-ink mb-2">Booking Confirmed! 🎉</h1>
+              <p className="text-neutral-500 mb-8">Your pest control service has been booked successfully</p>
 
-          {/* What happens next — 4-step timeline */}
+              {/* Booking ref card */}
+              <div className="bg-forest-900 rounded-2xl p-6 mb-6 text-center">
+                <p className="text-white/60 text-xs uppercase tracking-wider mb-2">Your Booking Reference</p>
+                <div className="flex items-center justify-center gap-3">
+                  <code className="font-mono font-black text-2xl text-emerald-400">{displayRef}</code>
+                  <button
+                    onClick={() => handleCopy(displayRef)}
+                    className="p-2 rounded-xl bg-white/10 hover:bg-white/20 transition-colors"
+                  >
+                    {copied ? <Check className="w-4 h-4 text-emerald-400" /> : <Copy className="w-4 h-4 text-white/60" />}
+                  </button>
+                </div>
+                <p className="text-white/40 text-xs mt-2">Save this for your records</p>
+              </div>
+
+              {/* Quick summary */}
+              <div className="bg-card rounded-2xl border border-cream-300 p-5 mb-6 text-left space-y-3">
+                <div className="flex items-center gap-3">
+                  <Shield className="w-4 h-4 text-brand-600" />
+                  <div>
+                    <p className="text-xs text-neutral-500">Service</p>
+                    <p className="text-sm font-semibold text-ink">{selectedService}</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-3">
+                  <Calendar className="w-4 h-4 text-brand-600" />
+                  <div>
+                    <p className="text-xs text-neutral-500">Scheduled</p>
+                    <p className="text-sm font-semibold text-ink">{selectedDate?.toLocaleDateString('en-IN')} • {selectedTimeSlot}</p>
+                  </div>
+                </div>
+              </div>
+            </>
+          )}
+
+          {/* What happens next */}
           <div className="bg-card rounded-2xl border border-cream-300 p-6 mb-8 text-left">
             <p className="font-display font-bold text-ink text-sm mb-4">What happens next?</p>
             {[

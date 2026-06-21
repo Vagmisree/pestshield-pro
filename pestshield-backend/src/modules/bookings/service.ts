@@ -20,6 +20,21 @@ const PLAN_MULTIPLIER: Record<PlanType, number> = {
   AMC_COMMERCIAL: 0.75,
 };
 
+// ─── Bulk Create Bookings ────────────────────────────────────────────────────
+
+export async function bulkCreateBookings(customerId: string, bookings: CreateBookingInput[]) {
+  const results = [];
+  for (const b of bookings) {
+    const booking = await createBooking(customerId, b);
+    results.push({
+      bookingRef: booking.bookingRef,
+      bookingId: booking.bookingId,
+      status: 'CONFIRMED',
+    });
+  }
+  return results;
+}
+
 // ─── Check Pincode Serviceability ────────────────────────────────────────────
 
 export async function checkPincode(pincode: string) {
@@ -119,12 +134,14 @@ export async function createBooking(customerId: string, input: CreateBookingInpu
   try {
     await notifyBookingConfirmed({
       phone: booking.customer.user.phone,
+      email: (booking.customer.user as { email?: string }).email,
       name: booking.customer.name,
       bookingRef: booking.bookingRef,
       service: booking.service.name,
       date: input.slotDate,
       slot: input.slotTime,
       amount: `₹${totalAmount.toFixed(2)}`,
+      address: input.address,
       recipientId: booking.customerId,
       bookingId: booking.id,
     });

@@ -1,9 +1,15 @@
 import type { Metadata, Viewport } from 'next'
-import { Plus_Jakarta_Sans, DM_Sans, Inter } from 'next/font/google'
+import { Plus_Jakarta_Sans, DM_Sans, Syne, Space_Grotesk, Orbitron, Share_Tech_Mono } from 'next/font/google'
 import { Analytics } from '@vercel/analytics/next'
 import { Toaster } from 'sonner'
 import { QueryProvider } from '@/components/providers/QueryProvider'
+import dynamic from 'next/dynamic'
 import './globals.css'
+
+const Scene3DBackground = dynamic(
+  () => import('@/components/three/Scene3DBackground').then(m => m.Scene3DBackground),
+  { ssr: false }
+)
 
 const plusJakartaSans = Plus_Jakarta_Sans({ 
   subsets: ['latin'],
@@ -19,10 +25,31 @@ const dmSans = DM_Sans({
   display: 'swap',
 })
 
-const inter = Inter({
+const syne = Syne({
   subsets: ['latin'],
-  weight: ['600', '700', '800', '900'],
+  weight: ['700', '800'],
+  variable: '--font-syne',
+  display: 'swap',
+})
+
+const spaceGrotesk = Space_Grotesk({
+  subsets: ['latin'],
+  weight: ['400', '500', '600'],
   variable: '--font-display',
+  display: 'swap',
+})
+
+const orbitron = Orbitron({
+  subsets: ['latin'],
+  weight: ['400', '700', '900'],
+  variable: '--font-orbitron',
+  display: 'swap',
+})
+
+const shareTechMono = Share_Tech_Mono({
+  subsets: ['latin'],
+  weight: ['400'],
+  variable: '--font-mono',
   display: 'swap',
 })
 
@@ -77,7 +104,7 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="en" className={`${plusJakartaSans.variable} ${dmSans.variable} ${inter.variable} bg-background`}>
+    <html lang="en" className={`${plusJakartaSans.variable} ${dmSans.variable} ${syne.variable} ${spaceGrotesk.variable} ${orbitron.variable} ${shareTechMono.variable} bg-background`}>
       <head>
         <script
           type="application/ld+json"
@@ -105,7 +132,8 @@ export default function RootLayout({
           }}
         />
       </head>
-      <body className="font-sans antialiased">
+      <body className="font-sans antialiased scanlines">
+        <Scene3DBackground />
         <QueryProvider>
           {children}
           <Toaster position="top-right" richColors closeButton />

@@ -13,6 +13,7 @@ import { Step6Review } from '@/components/booking/Step6Review';
 import { Step7Payment } from '@/components/booking/Step7Payment';
 import { Step8Confirmation } from '@/components/booking/Step8Confirmation';
 import { OrderSummary } from '@/components/booking/OrderSummary';
+import { CartSidebar } from '@/components/booking/CartSidebar';
 import { Button } from '@/components/ui/button';
 import { AnimatePresence, motion } from 'framer-motion';
 
@@ -40,7 +41,6 @@ export default function BookingPage() {
         fullName: user.name,
         phone: user.phone,
         email: user.email,
-        city: user.city,
       });
     }
   }, [user, formData.fullName]);
@@ -149,6 +149,9 @@ export default function BookingPage() {
           </div>
         </div>
       )}
+
+      {/* Cart Sidebar — shown when cart has items */}
+      {step !== 8 && <CartSidebar />}
     </div>
   );
 }

@@ -4,7 +4,7 @@ import { useAuthStore } from '@/stores/useAuthStore';
 import { useRouter, usePathname } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { LogOut, BarChart3, Zap, Users, AlertCircle, FileText, Shield, Menu, Bell } from 'lucide-react';
+import { LogOut, BarChart3, Zap, Users, AlertCircle, FileText, Shield, Menu, Bell, UserCheck, Settings } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
@@ -27,9 +27,11 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     { label: 'Dashboard', href: '/admin', icon: BarChart3 },
     { label: 'Bookings', href: '/admin/bookings', icon: Zap },
     { label: 'Technicians', href: '/admin/technicians', icon: Users },
+    { label: 'Customers', href: '/admin/customers', icon: UserCheck },
     { label: 'Complaints', href: '/admin/complaints', icon: AlertCircle },
     { label: 'Reports', href: '/admin/reports', icon: FileText },
     { label: 'Notifications', href: '/admin/notifications', icon: Bell },
+    { label: 'Settings', href: '/admin/settings', icon: Settings },
   ];
 
   const handleLogout = () => { logout(); router.push('/admin/login'); };

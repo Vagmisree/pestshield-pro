@@ -3,6 +3,73 @@
 
 @custom-variant dark (&:is(.dark *));
 
+/* ═══════════════════════════════════════════════════════════
+   TACTICAL AI HUD — CSS Variables & Global Styles
+   ═══════════════════════════════════════════════════════════ */
+
+/* Override body/html for dark tactical theme */
+html, body {
+  background: #071F17;
+  color: rgba(255,255,255,0.88);
+}
+
+:root {
+  --kill: #FF2020;
+  --bio: #00FF64;
+  --hud: rgba(0,255,100,0.7);
+  --surface: rgba(255,255,255,0.04);
+  --border: rgba(255,255,255,0.08);
+  --border-hud: rgba(0,255,100,0.25);
+  --bg: #030508;
+  --surface-raised: #0D0F1A;
+  --kill: #FF3B2F;
+  --bio: #00FF88;
+  --text-primary: rgba(255,255,255,0.92);
+  --text-secondary: rgba(255,255,255,0.5);
+  --text-muted: rgba(255,255,255,0.25);
+  --border: rgba(255,255,255,0.08);
+  --border-strong: rgba(255,255,255,0.16);
+}
+
+/* ─── Kill button glow ────────────────────────────────────── */
+.btn-kill {
+  animation: kill-pulse 2.5s ease-in-out infinite;
+}
+@keyframes kill-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(255,59,47,0.4); }
+  50%       { box-shadow: 0 0 0 16px rgba(255,59,47,0); }
+}
+
+/* ─── Scan line ───────────────────────────────────────────── */
+.scan-line {
+  position: absolute; left: 0; right: 0; height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(255,59,47,0.35), transparent);
+  pointer-events: none;
+  animation: hud-scan 5s linear infinite;
+}
+@keyframes hud-scan {
+  0%   { top: -2px; opacity: 0; }
+  5%   { opacity: 0.4; }
+  95%  { opacity: 0.4; }
+  100% { top: 100%; opacity: 0; }
+}
+
+/* ─── Section divider ─────────────────────────────────────── */
+.section-divider {
+  height: 1px;
+  background: rgba(255,59,47,0.15);
+  margin: 0; border: none;
+}
+
+/* ─── Pest cursor ─────────────────────────────────────────── */
+.pest-cursor { cursor: crosshair !important; }
+
+/* ─── 3D card ─────────────────────────────────────────────── */
+.tilt-card {
+  transform-style: preserve-3d;
+  will-change: transform;
+}
+
 :root {
   /* PestShield Pro — Organic Luxury Design System */
   --font-heading: 'Plus Jakarta Sans', sans-serif;
@@ -24,11 +91,11 @@
   /* Transition */
   --transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
 
-  /* Base semantic colors — Organic Luxury palette */
-  --background: #F7F5F0;
-  --foreground: #1C1917;
-  --card: #FEFCF7;
-  --card-foreground: #1C1917;
+  /* Base semantic colors — Dark Forest palette */
+  --background: #071F17;
+  --foreground: rgba(255,255,255,0.88);
+  --card: #0B3D2E;
+  --card-foreground: rgba(255,255,255,0.88);
   --popover: #FEFCF7;
   --popover-foreground: #1C1917;
   --primary: #16a34a;
@@ -308,4 +375,314 @@
 }
 .pill-amber {
   @apply inline-flex items-center px-3 py-1.5 rounded-full text-xs font-bold uppercase tracking-widest bg-accent-500/10 border border-accent-500/20 text-accent-600;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   PESTSHIELD CINEMATIC ANIMATIONS
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* ─── 3D card tilt ───────────────────────────────────────────────────────── */
+.tilt-card {
+  transform-style: preserve-3d;
+  will-change: transform;
+}
+
+/* ─── Pest death animation ───────────────────────────────────────────────── */
+@keyframes pest-die {
+  0%   { transform: rotate(0deg)   scale(1);   opacity: 1; }
+  30%  { transform: rotate(180deg) scale(0.8); opacity: 0.8; }
+  100% { transform: rotate(180deg) scale(0);   opacity: 0; }
+}
+.pest-die {
+  animation: pest-die 0.6s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+/* ─── Shield pulse ───────────────────────────────────────────────────────── */
+@keyframes shield-pulse {
+  0%, 100% { box-shadow: 0 0 0 0   rgba(74,222,128,0.4); }
+  50%       { box-shadow: 0 0 0 20px rgba(74,222,128,0); }
+}
+.shield-pulse {
+  animation: shield-pulse 2.5s ease-in-out infinite;
+}
+
+/* ─── Scan line sweep ────────────────────────────────────────────────────── */
+@keyframes scan-sweep {
+  0%   { transform: translateX(-100vw); opacity: 0; }
+  10%  { opacity: 1; }
+  90%  { opacity: 1; }
+  100% { transform: translateX(100vw);  opacity: 0; }
+}
+.scan-sweep {
+  animation: scan-sweep 3s linear infinite;
+}
+
+/* ─── Flip card base (used in HowItWorks) ────────────────────────────────── */
+.flip-card-inner {
+  transform-style: preserve-3d;
+  transition: transform 0.55s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.flip-card-front,
+.flip-card-back {
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
+}
+.flip-card-back {
+  transform: rotateY(180deg);
+}
+.flip-card:hover .flip-card-inner,
+.flip-card:focus .flip-card-inner {
+  transform: rotateY(180deg);
+}
+
+/* ─── Pest SVG icon subtle float (on service cards) ─────────────────────── */
+@keyframes pest-float {
+  0%, 100% { transform: translateY(0px)   rotate(0deg); }
+  50%       { transform: translateY(-4px) rotate(3deg); }
+}
+.pest-icon-float {
+  animation: pest-float 3s ease-in-out infinite;
+}
+
+/* ─── Service card glow ──────────────────────────────────────────────────── */
+.service-card-glow:hover {
+  box-shadow: 0 0 30px rgba(74,222,128,0.2), 0 8px 32px rgba(0,0,0,0.12);
+}
+
+/* ─── SVG path draw animation (HowItWorks connecting lines) ─────────────── */
+@keyframes draw-line {
+  from { stroke-dashoffset: 80; }
+  to   { stroke-dashoffset: 0; }
+}
+.animate-draw-line {
+  animation: draw-line 0.8s cubic-bezier(0.22, 1, 0.36, 1) 0.5s forwards;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   TACTICAL AI HUD — Animations & Utilities
+   ═══════════════════════════════════════════════════════════ */
+
+/* Scanlines overlay (add .scanlines to body) */
+.scanlines::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 9999;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    rgba(0,255,100,0.012) 2px,
+    rgba(0,255,100,0.012) 4px
+  );
+}
+
+/* HUD corner brackets */
+.hud-corners { position: relative; }
+.hud-corners::before,
+.hud-corners::after {
+  content: '';
+  position: absolute;
+  width: 12px;
+  height: 12px;
+  border-color: rgba(0,255,100,0.6);
+  border-style: solid;
+}
+.hud-corners::before { top: 0; left: 0; border-width: 1px 0 0 1px; }
+.hud-corners::after  { bottom: 0; right: 0; border-width: 0 1px 1px 0; }
+
+/* Kill button pulse */
+@keyframes killPulse {
+  0%,100% { box-shadow: 0 0 0 0 rgba(255,32,32,.5); }
+  50%      { box-shadow: 0 0 0 12px rgba(255,32,32,0); }
+}
+.btn-kill { animation: killPulse 2.5s ease-in-out infinite; }
+
+/* Bio glow */
+@keyframes bioGlow {
+  0%,100% { box-shadow: 0 0 10px rgba(0,255,100,.3); }
+  50%      { box-shadow: 0 0 25px rgba(0,255,100,.6); }
+}
+.btn-bio { animation: bioGlow 2s ease-in-out infinite; }
+
+/* Threat blink */
+@keyframes threatBlink {
+  0%,100% { opacity: 1; }
+  50%      { opacity: .4; }
+}
+.threat-blink { animation: threatBlink 1.2s ease-in-out infinite; }
+
+/* Scan line sweep */
+@keyframes scanSweep {
+  0%   { top: -2px; opacity: 0; }
+  5%   { opacity: .6; }
+  95%  { opacity: .6; }
+  100% { top: 100%; opacity: 0; }
+}
+.scan-line {
+  position: absolute;
+  left: 0; right: 0;
+  height: 1px;
+  pointer-events: none;
+  background: linear-gradient(90deg, transparent, rgba(0,255,100,.4), transparent);
+  animation: scanSweep 3.5s linear infinite;
+  z-index: 5;
+}
+
+/* HUD text glow — kill */
+.text-glow-kill { text-shadow: 0 0 30px rgba(255,32,32,0.8), 0 0 60px rgba(255,32,32,0.4); }
+/* HUD text glow — bio */
+.text-glow-bio  { text-shadow: 0 0 20px rgba(0,255,100,0.8), 0 0 40px rgba(0,255,100,0.4); }
+
+/* HUD glass card */
+.hud-card {
+  background: rgba(0,0,0,0.75);
+  border: 1px solid rgba(0,255,100,0.2);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+/* Threat progress bar */
+.threat-bar {
+  height: 2px;
+  background: linear-gradient(90deg, #FF2020, #FF7700);
+  border-radius: 1px;
+}
+
+/* Pest cursor */
+.pest-cursor { cursor: crosshair !important; }
+
+/* Section divider tactical */
+.section-divider-hud {
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(0,255,100,0.2), transparent);
+}
+
+/* ═══════════════════════════════════════════════════════════
+   FULL 3D SITE — Global 3D Utilities
+   ═══════════════════════════════════════════════════════════ */
+
+/* Ensure sections render above the 3D background */
+main, nav, footer {
+  position: relative;
+  z-index: 1;
+}
+
+/* All sections get a subtle 3D perspective */
+section {
+  transform-style: preserve-3d;
+}
+
+/* 3D card base — apply to any element for depth */
+.card-3d {
+  transform-style: preserve-3d;
+  transition: transform 0.4s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.4s ease;
+  will-change: transform;
+}
+.card-3d:hover {
+  transform: perspective(800px) rotateX(-4deg) rotateY(4deg) translateZ(8px);
+}
+
+/* Deep perspective wrapper */
+.perspective-1000 { perspective: 1000px; }
+.perspective-1200 { perspective: 1200px; }
+.perspective-2000 { perspective: 2000px; }
+
+/* 3D text pop */
+.text-3d {
+  text-shadow:
+    1px 1px 0 rgba(0,255,100,0.15),
+    2px 2px 0 rgba(0,255,100,0.10),
+    3px 3px 0 rgba(0,255,100,0.06),
+    4px 4px 0 rgba(0,255,100,0.03);
+}
+
+/* Depth layers via translateZ */
+.layer-near  { transform: translateZ(24px); }
+.layer-mid   { transform: translateZ(12px); }
+.layer-far   { transform: translateZ(-12px); }
+
+/* Floating animation for 3D elements */
+@keyframes float3d {
+  0%, 100% {
+    transform: translateY(0px) rotateX(0deg) rotateZ(0deg);
+  }
+  33% {
+    transform: translateY(-8px) rotateX(2deg) rotateZ(-1deg);
+  }
+  66% {
+    transform: translateY(-4px) rotateX(-1deg) rotateZ(1deg);
+  }
+}
+.float-3d {
+  animation: float3d 6s ease-in-out infinite;
+  transform-style: preserve-3d;
+}
+
+/* Holographic shimmer on cards */
+@keyframes holoShimmer {
+  0%   { background-position: -200% center; }
+  100% { background-position: 200% center; }
+}
+.holo-card {
+  background-image: linear-gradient(
+    105deg,
+    transparent 40%,
+    rgba(0,255,100,0.06) 50%,
+    transparent 60%
+  );
+  background-size: 200% 100%;
+  animation: holoShimmer 4s linear infinite;
+}
+
+/* Perspective hero sections */
+.section-3d-hero {
+  perspective: 1400px;
+  transform-style: preserve-3d;
+}
+
+/* Depth shadow for cards */
+.depth-shadow {
+  box-shadow:
+    0 4px 6px rgba(0,0,0,0.1),
+    0 10px 20px rgba(0,0,0,0.15),
+    0 30px 60px rgba(0,0,0,0.2),
+    0 0 0 1px rgba(0,255,100,0.08);
+}
+
+/* Inset 3D border */
+.border-3d {
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.1),
+    inset 0 -1px 0 rgba(0,0,0,0.2),
+    0 0 0 1px rgba(0,255,100,0.12);
+}
+
+/* 3D button press */
+.btn-3d {
+  transform-style: preserve-3d;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+.btn-3d::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  transform: translateZ(-4px);
+  background: rgba(0,0,0,0.4);
+  filter: blur(4px);
+}
+.btn-3d:active {
+  transform: translateY(2px) translateZ(-2px);
+}
+
+/* Page-level 3D backdrop */
+body {
+  background: #071F17;
+}
+
+/* Ensure the fixed 3D canvas doesn't interfere */
+canvas {
+  display: block;
 }

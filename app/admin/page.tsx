@@ -5,7 +5,7 @@ import { motion } from 'framer-motion';
 import { stagger, fadeInUp } from '@/lib/animations';
 import { mockRenewals } from '@/lib/data/renewals';
 import dynamic from 'next/dynamic';
-import { TrendingUp, Users, Zap, AlertCircle, RefreshCw, Calendar, CheckCircle } from 'lucide-react';
+import { TrendingUp, Users, Zap, AlertCircle, RefreshCw, Calendar } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useState } from 'react';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -14,11 +14,27 @@ const AreaChart = dynamic(() => import('recharts').then(mod => ({ default: mod.A
 const Area = dynamic(() => import('recharts').then(mod => ({ default: mod.Area })), { ssr: false });
 const BarChart = dynamic(() => import('recharts').then(mod => ({ default: mod.BarChart })), { ssr: false });
 const Bar = dynamic(() => import('recharts').then(mod => ({ default: mod.Bar })), { ssr: false });
+const PieChart = dynamic(() => import('recharts').then(mod => ({ default: mod.PieChart })), { ssr: false });
+const Pie = dynamic(() => import('recharts').then(mod => ({ default: mod.Pie })), { ssr: false });
+const Cell = dynamic(() => import('recharts').then(mod => ({ default: mod.Cell })), { ssr: false });
 const XAxis = dynamic(() => import('recharts').then(mod => ({ default: mod.XAxis })), { ssr: false });
 const YAxis = dynamic(() => import('recharts').then(mod => ({ default: mod.YAxis })), { ssr: false });
 const CartesianGrid = dynamic(() => import('recharts').then(mod => ({ default: mod.CartesianGrid })), { ssr: false });
 const Tooltip = dynamic(() => import('recharts').then(mod => ({ default: mod.Tooltip })), { ssr: false });
+const Legend = dynamic(() => import('recharts').then(mod => ({ default: mod.Legend })), { ssr: false });
 const ResponsiveContainer = dynamic(() => import('recharts').then(mod => ({ default: mod.ResponsiveContainer })), { ssr: false });
+
+const SERVICE_COLORS = ['#16a34a', '#2563eb', '#d97706', '#dc2626', '#7c3aed', '#0891b2'];
+
+// Fallback service breakdown if API doesn't return it
+const DEFAULT_SERVICE_BREAKDOWN = [
+  { service: 'Cockroach', count: 42 },
+  { service: 'Termite', count: 28 },
+  { service: 'Rodent', count: 19 },
+  { service: 'Mosquito', count: 15 },
+  { service: 'Bed Bug', count: 11 },
+  { service: 'General', count: 8 },
+];
 
 export default function AdminDashboard() {
   const [period, setPeriod] = useState('30D');
@@ -29,6 +45,7 @@ export default function AdminDashboard() {
   const technicianMap = dashData?.technicianMap || [];
   const upcomingSlots = dashData?.upcomingSlots || [];
   const monthlyRevenue = dashData?.revenueTrend || [];
+  const serviceBreakdown = dashData?.serviceBreakdown || DEFAULT_SERVICE_BREAKDOWN;
 
   const kpiCards = [
     { title: "Today's Bookings", value: todayBookings.total, subtext: `${todayBookings.completed} completed`, icon: Zap, color: 'bg-blue-50', textColor: 'text-blue-600', borderColor: 'border-l-blue-500' },
@@ -76,7 +93,7 @@ export default function AdminDashboard() {
         })}
       </motion.div>
 
-      {/* Charts */}
+      {/* Charts Row 1 */}
       <div className="grid lg:grid-cols-2 gap-6 mb-8">
         <div className="bg-card border border-cream-300 rounded-2xl p-6 shadow-card">
           <div className="flex items-center justify-between mb-4">
@@ -126,30 +143,57 @@ export default function AdminDashboard() {
         </div>
       </div>
 
-      {/* Renewals */}
-      <div className="bg-card border border-cream-300 rounded-2xl overflow-hidden shadow-card">
-        <div className="p-5 border-b border-cream-200 flex items-center justify-between">
-          <h3 className="font-display font-bold text-ink">Contract Renewals Due</h3>
-          <span className="text-xs text-red-500 font-bold bg-red-50 px-2.5 py-1 rounded-full">
-            {mockRenewals.filter(r => r.daysRemaining < 7).length} urgent
-          </span>
+      {/* Charts Row 2 — Service Breakdown Donut */}
+      <div className="grid lg:grid-cols-2 gap-6 mb-8">
+        <div className="bg-white rounded-3xl border border-cream-300 shadow-card p-6">
+          <h3 className="font-semibold text-ink mb-4">Bookings by Service</h3>
+          <ResponsiveContainer width="100%" height={240}>
+            <PieChart>
+              <Pie
+                data={serviceBreakdown}
+                dataKey="count"
+                nameKey="service"
+                cx="50%"
+                cy="50%"
+                innerRadius={60}
+                outerRadius={90}
+                paddingAngle={3}
+              >
+                {serviceBreakdown.map((_: unknown, i: number) => (
+                  <Cell key={i} fill={SERVICE_COLORS[i % SERVICE_COLORS.length]} />
+                ))}
+              </Pie>
+              <Tooltip formatter={(v: number) => [`${v} bookings`, '']} />
+              <Legend />
+            </PieChart>
+          </ResponsiveContainer>
         </div>
-        <div className="divide-y divide-cream-100">
-          {mockRenewals.map((renewal) => (
-            <div key={renewal.id} className="flex items-center gap-4 p-4">
-              <div className={cn('w-2 h-2 rounded-full flex-shrink-0',
-                renewal.daysRemaining < 7 ? 'bg-red-500' : renewal.daysRemaining < 15 ? 'bg-amber-500' : 'bg-emerald-400')} />
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-semibold text-ink truncate">{renewal.customerName}</p>
-                <p className="text-xs text-neutral-400">{renewal.serviceType}</p>
+
+        {/* Renewals */}
+        <div className="bg-card border border-cream-300 rounded-2xl overflow-hidden shadow-card">
+          <div className="p-5 border-b border-cream-200 flex items-center justify-between">
+            <h3 className="font-display font-bold text-ink">Contract Renewals Due</h3>
+            <span className="text-xs text-red-500 font-bold bg-red-50 px-2.5 py-1 rounded-full">
+              {mockRenewals.filter(r => r.daysRemaining < 7).length} urgent
+            </span>
+          </div>
+          <div className="divide-y divide-cream-100 overflow-y-auto max-h-[200px]">
+            {mockRenewals.map((renewal) => (
+              <div key={renewal.id} className="flex items-center gap-4 p-4">
+                <div className={cn('w-2 h-2 rounded-full flex-shrink-0',
+                  renewal.daysRemaining < 7 ? 'bg-red-500' : renewal.daysRemaining < 15 ? 'bg-amber-500' : 'bg-emerald-400')} />
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-semibold text-ink truncate">{renewal.customerName}</p>
+                  <p className="text-xs text-neutral-400">{renewal.serviceType}</p>
+                </div>
+                <span className={cn('text-xs font-bold px-2.5 py-1 rounded-full',
+                  renewal.daysRemaining < 7 ? 'bg-red-50 text-red-600' :
+                  renewal.daysRemaining < 15 ? 'bg-amber-50 text-amber-600' : 'bg-emerald-50 text-emerald-600')}>
+                  {renewal.daysRemaining}d left
+                </span>
               </div>
-              <span className={cn('text-xs font-bold px-2.5 py-1 rounded-full',
-                renewal.daysRemaining < 7 ? 'bg-red-50 text-red-600' :
-                renewal.daysRemaining < 15 ? 'bg-amber-50 text-amber-600' : 'bg-emerald-50 text-emerald-600')}>
-                {renewal.daysRemaining}d left
-              </span>
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
       </div>
     </div>

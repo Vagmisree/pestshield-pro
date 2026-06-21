@@ -6,6 +6,11 @@ import Link from 'next/link'
 import { fadeUp, viewportSettings } from '@/lib/animations'
 
 function getTimeToEndOfMonth() {
+  // This function will only be called on client
+  if (typeof window === 'undefined') {
+    return { days: 0, hours: 0, minutes: 0, seconds: 0 }
+  }
+  
   const now = new Date()
   const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59)
   const diff = endOfMonth.getTime() - now.getTime()

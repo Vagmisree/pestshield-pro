@@ -11,6 +11,7 @@ export async function notifyBookingConfirmed(opts: {
   phone: string; name: string; bookingRef: string;
   service: string; date: string; slot: string;
   amount: string; recipientId: string; bookingId: string;
+  email?: string; address?: string;
 }) {
   await sendWhatsApp({
     phone: opts.phone,
@@ -20,11 +21,22 @@ export async function notifyBookingConfirmed(opts: {
     recipientId: opts.recipientId,
     recipientType: UserRole.CUSTOMER,
   });
-  await sendEmail({
-    to: opts.phone, // replace with actual email when available
-    subject: `Booking Confirmed — ${opts.bookingRef}`,
-    dynamicData: opts,
-  });
+  // Only send email if we have a real email address
+  if (opts.email && opts.email.includes('@')) {
+    await sendEmail({
+      to: opts.email,
+      subject: `✅ Booking Confirmed — ${opts.bookingRef} | PestShield Pro`,
+      dynamicData: {
+        'Customer Name': opts.name,
+        'Booking Reference': opts.bookingRef,
+        'Service': opts.service,
+        'Date & Time': `${opts.date} ${opts.slot}`,
+        'Amount Paid': opts.amount,
+        'Address': opts.address || '',
+      },
+      recipientId: opts.recipientId,
+    });
+  }
 }
 
 export async function notifyTechnicianAssigned(opts: {

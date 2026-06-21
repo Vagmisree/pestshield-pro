@@ -7,7 +7,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import {
   Shield, Menu, X, ChevronRight, Home, Wrench, Info, ShoppingBag, BookOpen,
   MapPin, LayoutDashboard, ChevronDown, LogOut, User, Zap, Bug, TreeDeciduous,
-  Rat, Wind, Bed, ShieldCheck, HelpCircle
+  Rat, Wind, Bed, ShieldCheck, HelpCircle, ArrowRight,
 } from 'lucide-react'
 import { useScrolled } from '@/lib/hooks/use-scrolled'
 import { useAuthStore } from '@/stores/useAuthStore'
@@ -15,92 +15,82 @@ import { cn } from '@/lib/utils'
 import { mobileMenuVariants, mobileMenuItemVariants } from '@/lib/animations'
 
 const servicesMega = [
-  { icon: Bug, label: 'Cockroach Control', href: '/services/cockroach-control', desc: 'Gel bait + spray' },
-  { icon: TreeDeciduous, label: 'Termite Control', href: '/services/termite-control', desc: '1-year warranty' },
-  { icon: Rat, label: 'Rodent Control', href: '/services/rodent-control', desc: 'Humane trapping' },
-  { icon: Wind, label: 'Mosquito Control', href: '/services/mosquito-control', desc: 'Fogging + larvicide' },
-  { icon: Bed, label: 'Bed Bug Control', href: '/services/bed-bug-control', desc: 'Heat treatment' },
-  { icon: ShieldCheck, label: 'General Pest Control', href: '/services/general-pest-control', desc: 'Full home protection' },
+  { icon: Bug,           label: 'Cockroach Control',    href: '/services/cockroach-control',    desc: 'Gel bait + spray' },
+  { icon: TreeDeciduous, label: 'Termite Control',       href: '/services/termite-control',       desc: '1-year warranty' },
+  { icon: Rat,           label: 'Rodent Control',        href: '/services/rodent-control',        desc: 'Humane trapping' },
+  { icon: Wind,          label: 'Mosquito Control',      href: '/services/mosquito-control',      desc: 'Fogging + larvicide' },
+  { icon: Bed,           label: 'Bed Bug Control',       href: '/services/bed-bug-control',       desc: 'Heat treatment' },
+  { icon: ShieldCheck,   label: 'General Pest Control',  href: '/services/general-pest-control',  desc: 'Full home protection' },
 ]
 
 const navLinks = [
-  { label: 'Home', href: '/', icon: Home },
-  { label: 'Services', href: '/services', icon: Wrench, hasMega: true },
-  { label: 'About', href: '/about', icon: Info },
-  { label: 'DIY Shop', href: '/shop', icon: ShoppingBag },
-  { label: 'Blog', href: '/blog', icon: BookOpen },
-  { label: 'Branches', href: '/branches', icon: MapPin },
-  { label: 'FAQ', href: '/faq', icon: HelpCircle },
+  { label: 'Services',  href: '/services',  icon: Wrench,   hasMega: true },
+  { label: 'About',     href: '/about',     icon: Info },
+  { label: 'Plans',     href: '/#plans',    icon: Shield },
+  { label: 'Branches',  href: '/branches',  icon: MapPin },
+  { label: 'Blog',      href: '/blog',      icon: BookOpen },
 ]
 
 export function Navbar() {
-  const scrolled = useScrolled(60)
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
-  const [megaOpen, setMegaOpen] = useState(false)
-  const [userMenuOpen, setUserMenuOpen] = useState(false)
-  const [mounted, setMounted] = useState(false)
+  const scrolled = useScrolled(50)
+  const [mobileOpen, setMobileOpen] = useState(false)
+  const [megaOpen, setMegaOpen]     = useState(false)
+  const [userOpen, setUserOpen]     = useState(false)
+  const [mounted, setMounted]       = useState(false)
   const { isAuthenticated, user, logout } = useAuthStore()
-  const pathname = usePathname()
-  const megaRef = useRef<HTMLDivElement>(null)
-  const userRef = useRef<HTMLDivElement>(null)
+  const pathname  = usePathname()
+  const megaRef   = useRef<HTMLDivElement>(null)
+  const userRef   = useRef<HTMLDivElement>(null)
 
   useEffect(() => { setMounted(true) }, [])
-
   useEffect(() => {
-    document.body.style.overflow = mobileMenuOpen ? 'hidden' : ''
+    document.body.style.overflow = mobileOpen ? 'hidden' : ''
     return () => { document.body.style.overflow = '' }
-  }, [mobileMenuOpen])
-
-  // Close dropdowns on outside click
+  }, [mobileOpen])
   useEffect(() => {
-    const handler = (e: MouseEvent) => {
+    const h = (e: MouseEvent) => {
       if (megaRef.current && !megaRef.current.contains(e.target as Node)) setMegaOpen(false)
-      if (userRef.current && !userRef.current.contains(e.target as Node)) setUserMenuOpen(false)
+      if (userRef.current && !userRef.current.contains(e.target as Node)) setUserOpen(false)
     }
-    document.addEventListener('mousedown', handler)
-    return () => document.removeEventListener('mousedown', handler)
+    document.addEventListener('mousedown', h)
+    return () => document.removeEventListener('mousedown', h)
   }, [])
 
-  if (!mounted) {
-    return <header className="fixed top-0 left-0 right-0 z-50 h-16"><nav className="h-full" /></header>
-  }
+  if (!mounted) return <header className="fixed inset-x-0 top-0 z-50 h-16" />
 
-  const dashboardHref = user?.role === 'ADMIN' ? '/admin' : user?.role === 'TECHNICIAN' ? '/technician' : '/dashboard'
+  const dashHref = user?.role === 'ADMIN' ? '/admin' : user?.role === 'TECHNICIAN' ? '/technician' : '/dashboard'
 
   return (
-    <header className="fixed top-0 left-0 right-0 z-50">
+    <header className="fixed inset-x-0 top-0 z-50">
       <motion.nav
         initial={false}
         animate={{
-          backgroundColor: scrolled ? 'rgba(247,245,240,0.97)' : 'rgba(247,245,240,0)',
-          boxShadow: scrolled ? '0 1px 0 rgba(221,217,208,0.8)' : 'none',
-          backdropFilter: scrolled ? 'blur(12px)' : 'blur(0px)',
+          backgroundColor: scrolled ? 'rgba(7,31,23,0.97)' : 'transparent',
+          borderBottomColor: scrolled ? 'rgba(0,255,100,0.10)' : 'transparent',
+          backdropFilter: scrolled ? 'blur(16px)' : 'blur(0px)',
         }}
-        transition={{ duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
-        className="relative"
+        transition={{ duration: 0.25 }}
+        className="border-b"
       >
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="flex h-16 items-center justify-between">
-            {/* Logo */}
+
+            {/* ── Logo ───────────────────────────────────────────────── */}
             <Link href="/" className="flex items-center gap-2.5 group">
-              <div className={cn(
-                'relative flex items-center justify-center w-9 h-9 rounded-xl transition-all',
-                scrolled ? 'bg-forest-900 ring-1 ring-forest-700' : 'bg-white/15 backdrop-blur-sm'
-              )}>
-                <Shield className="h-5 w-5 text-white" />
-                {scrolled && (
-                  <span className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-emerald-400 border-2 border-white" />
-                )}
+              <div className="relative flex items-center justify-center w-9 h-9 rounded-xl bg-[#00FF64]/10 border border-[#00FF64]/30 group-hover:border-[#00FF64]/60 transition-colors"
+                style={{ boxShadow: '0 0 14px rgba(0,255,100,0.15)' }}>
+                <Shield className="h-5 w-5 text-[#00FF64]" />
               </div>
-              <span className={cn('font-heading font-bold text-lg transition-colors', scrolled ? 'text-ink' : 'text-white')}>
-                PestShield Pro
-              </span>
+              <div className="flex items-baseline gap-1">
+                <span className="font-heading font-bold text-lg text-white tracking-tight">PestShield</span>
+                <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-[#00FF64]/15 text-[#00FF64] border border-[#00FF64]/30 tracking-wide">PRO</span>
+              </div>
             </Link>
 
-            {/* Desktop Nav Links */}
-            <div className="hidden md:flex items-center gap-0.5">
+            {/* ── Desktop links ───────────────────────────────────────── */}
+            <div className="hidden md:flex items-center gap-1">
               {navLinks.map((link) => {
-                const isActive = pathname === link.href || (link.href !== '/' && pathname.startsWith(link.href))
+                const active = pathname === link.href || (link.href !== '/' && !link.href.startsWith('/#') && pathname.startsWith(link.href))
                 if (link.hasMega) {
                   return (
                     <div key={link.href} ref={megaRef} className="relative">
@@ -108,9 +98,7 @@ export function Navbar() {
                         onClick={() => setMegaOpen(!megaOpen)}
                         className={cn(
                           'flex items-center gap-1 px-4 py-2 text-sm font-medium rounded-lg transition-all',
-                          scrolled
-                            ? isActive ? 'text-brand-600 bg-brand-50' : 'text-neutral-700 hover:text-brand-600 hover:bg-brand-50'
-                            : 'text-white/85 hover:text-white hover:bg-white/10'
+                          active ? 'text-[#00FF64]' : 'text-white/70 hover:text-white hover:bg-white/5'
                         )}
                       >
                         {link.label}
@@ -123,29 +111,35 @@ export function Navbar() {
                             animate={{ opacity: 1, y: 0, scale: 1 }}
                             exit={{ opacity: 0, y: 8, scale: 0.97 }}
                             transition={{ duration: 0.15 }}
-                            className="absolute top-full left-1/2 -translate-x-1/2 mt-2 w-[480px] bg-white rounded-2xl shadow-2xl border border-cream-300 p-4 z-50"
+                            className="absolute top-full left-1/2 -translate-x-1/2 mt-3 w-[500px] rounded-2xl p-4 z-50 border"
+                            style={{
+                              background: 'rgba(7,31,23,0.96)',
+                              borderColor: 'rgba(0,255,100,0.15)',
+                              backdropFilter: 'blur(20px)',
+                              boxShadow: '0 0 40px rgba(0,0,0,0.5), 0 0 20px rgba(0,255,100,0.05)',
+                            }}
                           >
                             <div className="grid grid-cols-2 gap-2 mb-3">
                               {servicesMega.map((svc) => (
                                 <Link key={svc.href} href={svc.href} onClick={() => setMegaOpen(false)}
-                                  className="flex items-center gap-3 p-3 rounded-xl hover:bg-cream-100 transition-colors group">
-                                  <div className="w-9 h-9 rounded-lg bg-forest-900 flex items-center justify-center flex-shrink-0">
-                                    <svc.icon className="h-4 w-4 text-emerald-400" />
+                                  className="flex items-center gap-3 p-3 rounded-xl hover:bg-[#00FF64]/5 border border-transparent hover:border-[#00FF64]/15 transition-all group">
+                                  <div className="w-9 h-9 rounded-lg bg-[#00FF64]/10 border border-[#00FF64]/20 flex items-center justify-center flex-shrink-0">
+                                    <svc.icon className="h-4 w-4 text-[#00FF64]" />
                                   </div>
                                   <div>
-                                    <p className="text-sm font-semibold text-ink group-hover:text-brand-600 transition-colors">{svc.label}</p>
-                                    <p className="text-xs text-neutral-400">{svc.desc}</p>
+                                    <p className="text-sm font-semibold text-white group-hover:text-[#00FF64] transition-colors">{svc.label}</p>
+                                    <p className="text-xs text-white/40">{svc.desc}</p>
                                   </div>
                                 </Link>
                               ))}
                             </div>
-                            <div className="border-t border-cream-200 pt-3 flex items-center justify-between">
+                            <div className="border-t border-white/5 pt-3 flex items-center justify-between">
                               <Link href="/services" onClick={() => setMegaOpen(false)}
-                                className="text-sm font-semibold text-brand-600 hover:text-brand-700 transition-colors">
+                                className="text-sm font-semibold text-[#00FF64]/70 hover:text-[#00FF64] transition-colors">
                                 View all services →
                               </Link>
                               <Link href="/book" onClick={() => setMegaOpen(false)}
-                                className="px-4 py-2 bg-accent-500 hover:bg-accent-600 text-white text-sm font-bold rounded-full transition-colors">
+                                className="px-4 py-2 bg-[#FFB800] hover:bg-[#FFC933] text-[#071F17] text-sm font-bold rounded-full transition-colors">
                                 Book Now
                               </Link>
                             </div>
@@ -158,78 +152,58 @@ export function Navbar() {
                 return (
                   <Link key={link.href} href={link.href}
                     className={cn(
-                      'px-4 py-2 text-sm font-medium rounded-lg transition-all relative group',
-                      scrolled
-                        ? isActive ? 'text-brand-600 bg-brand-50' : 'text-neutral-700 hover:text-brand-600 hover:bg-brand-50'
-                        : 'text-white/85 hover:text-white hover:bg-white/10'
+                      'px-4 py-2 text-sm font-medium rounded-lg transition-all',
+                      active ? 'text-[#00FF64]' : 'text-white/70 hover:text-white hover:bg-white/5'
                     )}
                   >
                     {link.label}
-                    <span className={cn(
-                      'absolute bottom-1 left-4 right-4 h-0.5 transition-transform origin-left rounded-full',
-                      scrolled ? 'bg-emerald-400' : 'bg-white/60',
-                      isActive ? 'scale-x-100' : 'scale-x-0 group-hover:scale-x-100'
-                    )} />
                   </Link>
                 )
               })}
             </div>
 
-            {/* Desktop CTAs */}
+            {/* ── Desktop CTA cluster ────────────────────────────────── */}
             <div className="hidden md:flex items-center gap-2">
-              {/* Free Inspection button */}
-              <Link href="/free-inspection"
-                className={cn(
-                  'flex items-center gap-1.5 px-4 py-2 text-sm font-semibold rounded-full border transition-all',
-                  scrolled
-                    ? 'text-brand-600 border-brand-200 bg-brand-50 hover:bg-brand-100'
-                    : 'text-white border-white/30 hover:bg-white/10'
-                )}
-              >
-                <Zap className="h-3.5 w-3.5" />
-                Free Inspection
-              </Link>
-
               {isAuthenticated ? (
                 <div ref={userRef} className="relative">
-                  <button onClick={() => setUserMenuOpen(!userMenuOpen)}
-                    className={cn(
-                      'flex items-center gap-2 px-3 py-2 rounded-full border transition-all',
-                      scrolled
-                        ? 'text-neutral-700 border-cream-300 hover:border-brand-600 hover:text-brand-600'
-                        : 'text-white border-white/30 hover:bg-white/10'
-                    )}
-                  >
-                    <div className="w-6 h-6 rounded-full bg-forest-900 flex items-center justify-center">
-                      <span className="text-white text-xs font-black">{user?.name?.charAt(0) || 'U'}</span>
+                  <button onClick={() => setUserOpen(!userOpen)}
+                    className="flex items-center gap-2 px-3 py-2 rounded-full border border-white/10 hover:border-[#00FF64]/30 transition-all text-white/80 hover:text-white">
+                    <div className="w-6 h-6 rounded-full bg-[#00FF64]/20 flex items-center justify-center">
+                      <span className="text-[#00FF64] text-xs font-black">{user?.name?.charAt(0) || 'U'}</span>
                     </div>
                     <span className="text-sm font-medium max-w-[80px] truncate">{user?.name?.split(' ')[0]}</span>
-                    <ChevronDown className={cn('h-3.5 w-3.5 transition-transform', userMenuOpen && 'rotate-180')} />
+                    <ChevronDown className={cn('h-3.5 w-3.5 transition-transform', userOpen && 'rotate-180')} />
                   </button>
                   <AnimatePresence>
-                    {userMenuOpen && (
+                    {userOpen && (
                       <motion.div
-                        initial={{ opacity: 0, y: 8, scale: 0.97 }}
+                        initial={{ opacity: 0, y: 6, scale: 0.97 }}
                         animate={{ opacity: 1, y: 0, scale: 1 }}
-                        exit={{ opacity: 0, y: 8, scale: 0.97 }}
+                        exit={{ opacity: 0, y: 6, scale: 0.97 }}
                         transition={{ duration: 0.15 }}
-                        className="absolute right-0 top-full mt-2 w-52 bg-white rounded-2xl shadow-2xl border border-cream-300 p-2 z-50"
+                        className="absolute right-0 top-full mt-2 w-52 rounded-2xl p-2 z-50 border"
+                        style={{
+                          background: 'rgba(7,31,23,0.97)',
+                          borderColor: 'rgba(0,255,100,0.12)',
+                          backdropFilter: 'blur(16px)',
+                          boxShadow: '0 20px 40px rgba(0,0,0,0.5)',
+                        }}
                       >
-                        <div className="px-3 py-2 mb-1 border-b border-cream-200">
-                          <p className="font-semibold text-ink text-sm">{user?.name}</p>
-                          <p className="text-xs text-neutral-400">{user?.phone}</p>
+                        <div className="px-3 py-2 mb-1 border-b border-white/5">
+                          <p className="font-semibold text-white text-sm">{user?.name}</p>
+                          <p className="text-xs text-white/40">{user?.phone}</p>
                         </div>
-                        <Link href={dashboardHref} onClick={() => setUserMenuOpen(false)}
-                          className="flex items-center gap-2.5 px-3 py-2.5 rounded-xl hover:bg-cream-100 transition-colors text-sm text-neutral-700">
-                          <LayoutDashboard className="h-4 w-4 text-neutral-400" />Dashboard
+                        <Link href={dashHref} onClick={() => setUserOpen(false)}
+                          className="flex items-center gap-2.5 px-3 py-2.5 rounded-xl hover:bg-white/5 transition-colors text-sm text-white/70 hover:text-white">
+                          <LayoutDashboard className="h-4 w-4 text-[#00FF64]" /> Dashboard
                         </Link>
-                        <Link href="/dashboard/profile" onClick={() => setUserMenuOpen(false)}
-                          className="flex items-center gap-2.5 px-3 py-2.5 rounded-xl hover:bg-cream-100 transition-colors text-sm text-neutral-700">
-                          <User className="h-4 w-4 text-neutral-400" />Profile
+                        <Link href="/dashboard/profile" onClick={() => setUserOpen(false)}
+                          className="flex items-center gap-2.5 px-3 py-2.5 rounded-xl hover:bg-white/5 transition-colors text-sm text-white/70 hover:text-white">
+                          <User className="h-4 w-4 text-[#00FF64]" /> Profile
                         </Link>
-                        <button onClick={() => { logout(); setUserMenuOpen(false) }}
-                          className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl hover:bg-red-50 transition-colors text-sm text-red-600 mt-1 border-t border-cream-200">
-                          <LogOut className="h-4 w-4" />Sign Out
+                        <button onClick={() => { logout(); setUserOpen(false) }}
+                          className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl hover:bg-red-500/10 transition-colors text-sm text-red-400 mt-1 border-t border-white/5">
+                          <LogOut className="h-4 w-4" /> Sign Out
                         </button>
                       </motion.div>
                     )}
@@ -237,85 +211,81 @@ export function Navbar() {
                 </div>
               ) : (
                 <Link href="/login"
-                  className={cn(
-                    'px-4 py-2 text-sm font-medium rounded-full border transition-all',
-                    scrolled
-                      ? 'text-neutral-700 border-cream-300 hover:border-brand-600 hover:text-brand-600'
-                      : 'text-white border-white/30 hover:bg-white/10'
-                  )}
-                >
+                  className="px-4 py-2 text-sm font-medium rounded-full border border-white/10 text-white/70 hover:text-white hover:border-white/30 transition-all">
                   Login
                 </Link>
               )}
               <Link href="/book"
-                className="relative group px-5 py-2.5 text-sm font-semibold rounded-full bg-accent-500 text-white hover:bg-accent-600 transition-all shadow-md hover:shadow-lg">
-                <span className="relative z-10">Book Now</span>
+                className="flex items-center gap-1.5 px-5 py-2.5 rounded-full font-semibold text-sm text-[#071F17] transition-all group"
+                style={{
+                  background: '#FFB800',
+                  boxShadow: '0 0 0 0 rgba(255,184,0,0)',
+                  transition: 'box-shadow 0.3s, background 0.2s',
+                }}
+                onMouseEnter={e => (e.currentTarget.style.boxShadow = '0 0 20px rgba(255,184,0,0.5)')}
+                onMouseLeave={e => (e.currentTarget.style.boxShadow = '0 0 0 0 rgba(255,184,0,0)')}
+              >
+                Book Now
+                <ArrowRight className="h-3.5 w-3.5 group-hover:translate-x-0.5 transition-transform" />
               </Link>
             </div>
 
-            {/* Mobile Menu Button */}
+            {/* ── Mobile toggle ──────────────────────────────────────── */}
             <button
-              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className={cn(
-                'md:hidden p-2 rounded-xl transition-colors',
-                scrolled ? 'text-ink hover:bg-cream-200' : 'text-white hover:bg-white/10'
-              )}
-              aria-label={mobileMenuOpen ? 'Close menu' : 'Open menu'}
+              onClick={() => setMobileOpen(!mobileOpen)}
+              className="md:hidden p-2 rounded-xl text-white/80 hover:text-white hover:bg-white/5 transition-colors"
+              aria-label="Toggle menu"
             >
-              {mobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+              {mobileOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
             </button>
           </div>
         </div>
 
-        {/* Mobile Menu */}
+        {/* ── Mobile menu ────────────────────────────────────────────── */}
         <AnimatePresence>
-          {mobileMenuOpen && (
+          {mobileOpen && (
             <motion.div
               initial="closed" animate="open" exit="closed"
               variants={mobileMenuVariants}
-              className="md:hidden absolute top-full left-0 right-0 bg-cream-100 border-t border-cream-300 shadow-xl overflow-hidden"
+              className="md:hidden absolute top-full inset-x-0 border-t overflow-hidden"
+              style={{
+                background: 'rgba(7,31,23,0.98)',
+                borderColor: 'rgba(0,255,100,0.1)',
+                backdropFilter: 'blur(20px)',
+              }}
             >
               <div className="px-4 py-4 space-y-1">
-                {navLinks.map((link) => {
+                {[{ label: 'Home', href: '/', icon: Home }, ...navLinks].map((link) => {
                   const Icon = link.icon
                   return (
                     <motion.div key={link.href} variants={mobileMenuItemVariants}>
-                      <Link href={link.href} onClick={() => setMobileMenuOpen(false)}
-                        className="flex items-center justify-between px-4 py-3 text-base font-medium text-neutral-700 hover:text-brand-600 hover:bg-brand-50 rounded-xl transition-colors">
-                        <div className="flex items-center gap-3">
-                          <Icon className="h-5 w-5 text-neutral-400" />
+                      <Link href={link.href} onClick={() => setMobileOpen(false)}
+                        className="flex items-center justify-between px-4 py-3 rounded-xl text-white/70 hover:text-white hover:bg-white/5 transition-colors">
+                        <div className="flex items-center gap-3 text-sm font-medium">
+                          <Icon className="h-4 w-4 text-[#00FF64]" />
                           {link.label}
                         </div>
-                        <ChevronRight className="h-4 w-4 text-neutral-400" />
+                        <ChevronRight className="h-4 w-4 text-white/20" />
                       </Link>
                     </motion.div>
                   )
                 })}
-                <motion.div variants={mobileMenuItemVariants}>
-                  <Link href="/free-inspection" onClick={() => setMobileMenuOpen(false)}
-                    className="flex items-center justify-between px-4 py-3 text-base font-medium text-brand-600 hover:bg-brand-50 rounded-xl transition-colors">
-                    <div className="flex items-center gap-3">
-                      <Zap className="h-5 w-5 text-brand-600" />
-                      Free Inspection
-                    </div>
-                    <ChevronRight className="h-4 w-4 text-neutral-400" />
-                  </Link>
-                </motion.div>
-                <motion.div variants={mobileMenuItemVariants} className="pt-4 flex gap-3">
+                <motion.div variants={mobileMenuItemVariants} className="pt-3 pb-1 flex gap-2">
                   {isAuthenticated ? (
-                    <Link href={dashboardHref} onClick={() => setMobileMenuOpen(false)}
-                      className="flex-1 px-4 py-3 text-center text-sm font-medium rounded-full border border-cream-300 text-neutral-700 hover:border-brand-600 hover:text-brand-600 transition-all">
-                      Dashboard →
+                    <Link href={dashHref} onClick={() => setMobileOpen(false)}
+                      className="flex-1 py-3 text-center text-sm font-medium rounded-full border border-white/10 text-white/70">
+                      Dashboard
                     </Link>
                   ) : (
-                    <Link href="/login" onClick={() => setMobileMenuOpen(false)}
-                      className="flex-1 px-4 py-3 text-center text-sm font-medium rounded-full border border-cream-300 text-neutral-700 hover:border-brand-600 hover:text-brand-600 transition-all">
+                    <Link href="/login" onClick={() => setMobileOpen(false)}
+                      className="flex-1 py-3 text-center text-sm font-medium rounded-full border border-white/10 text-white/70">
                       Login
                     </Link>
                   )}
-                  <Link href="/book" onClick={() => setMobileMenuOpen(false)}
-                    className="flex-1 px-4 py-3 text-center text-sm font-semibold rounded-full bg-accent-500 text-white hover:bg-accent-600 transition-all">
-                    Book Now
+                  <Link href="/book" onClick={() => setMobileOpen(false)}
+                    className="flex-1 py-3 text-center text-sm font-bold rounded-full text-[#071F17]"
+                    style={{ background: '#FFB800' }}>
+                    Book Now →
                   </Link>
                 </motion.div>
               </div>

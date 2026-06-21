@@ -1,11 +1,11 @@
 import { Navbar, Footer, WhatsAppFloat, MobileBookBar } from '@/components/layout'
-import { 
-  Hero, 
-  ScrollTicker, 
-  HowItWorks, 
-  ServicesGrid, 
-  WhyUs, 
-  Stats, 
+import {
+  Hero,
+  ScrollTicker,
+  HowItWorks,
+  ServicesGrid,
+  WhyUs,
+  Stats,
   Testimonials,
   OrganicBand,
   Plans,
@@ -13,7 +13,8 @@ import {
   CTABand,
   EnquiryPopup,
   OfferBanner,
-  CommercialCTA
+  CommercialCTA,
+  AIPestVision,
 } from '@/components/home'
 
 export default function HomePage() {
@@ -21,15 +22,19 @@ export default function HomePage() {
     <>
       <Navbar />
       <main>
+        {/* ─── Part 1 — above the fold ───────────────────── */}
         <Hero />
         <ScrollTicker />
-        <HowItWorks />
         <ServicesGrid />
-        <WhyUs />
+        <HowItWorks />
         <Stats />
+
+        {/* ─── Part 2 — below the fold ───────────────────── */}
+        <WhyUs />
         <Testimonials />
         <CommercialCTA />
         <OrganicBand />
+        <AIPestVision />
         <Plans />
         <OfferBanner />
         <BlogPreview />

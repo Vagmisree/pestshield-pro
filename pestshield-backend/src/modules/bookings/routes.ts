@@ -20,6 +20,7 @@ router.get('/check-pincode/:pincode', bookingController.checkPincode);
 router.use(authenticate);
 
 router.post('/', authorize('CUSTOMER'), validate(createBookingSchema), bookingController.createBooking);
+router.post('/bulk-create', authorize('CUSTOMER'), bookingController.bulkCreate);
 router.get('/', validate(bookingListQuerySchema, 'query'), bookingController.listBookings);
 router.get('/:id', bookingController.getBooking);
 router.patch('/:id/reschedule', authorize('CUSTOMER'), validate(rescheduleSchema), bookingController.rescheduleBooking);
