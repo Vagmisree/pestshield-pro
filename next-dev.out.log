@@ -1,11 +1,6 @@
-
-> my-project@0.1.0 dev C:\Users\pc\Downloads\run-code (1)
-> next dev
-
-▲ Next.js 16.2.6 (Turbopack)
-- Local:         http://localhost:3000
-- Network:       http://192.168.1.13:3000
+▲ Next.js 16.2.6 (webpack)
+- Local:         http://127.0.0.1:3000
+- Network:       http://127.0.0.1:3000
 - Environments: .env.local
-✓ Ready in 717ms
-Creating turbopack project { dir: 'C:\\Users\\pc\\Downloads\\run-code (1)', testMode: true }
+✓ Ready in 692ms
 
